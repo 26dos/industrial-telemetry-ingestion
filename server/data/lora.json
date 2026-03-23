@@ -1,0 +1,8 @@
+{
+  "frequency": 433,
+  "bandwidth": 125,
+  "spreading_factor": 7,
+  "coding_rate": 1,
+  "tx_power": 20,
+  "sync_word": 52
+}

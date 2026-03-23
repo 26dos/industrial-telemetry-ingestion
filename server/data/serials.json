@@ -1,0 +1,45 @@
+{
+  "serial_max": 4,
+  "serials": [
+    {
+      "index": 1,
+      "device": "/dev/rs485-1",
+      "baud_rate": 9600,
+      "data_bits": 8,
+      "stop_bits": 1,
+      "parity": 0,
+      "mode": 1,
+      "lora_channel": 0
+    },
+    {
+      "index": 2,
+      "device": "/dev/rs485-2",
+      "baud_rate": 9600,
+      "data_bits": 8,
+      "stop_bits": 1,
+      "parity": 0,
+      "mode": 1,
+      "lora_channel": 0
+    },
+    {
+      "index": 3,
+      "device": "/dev/rs485-3",
+      "baud_rate": 9600,
+      "data_bits": 8,
+      "stop_bits": 1,
+      "parity": 0,
+      "mode": 1,
+      "lora_channel": 0
+    },
+    {
+      "index": 4,
+      "device": "/dev/rs485-4",
+      "baud_rate": 9600,
+      "data_bits": 8,
+      "stop_bits": 1,
+      "parity": 0,
+      "mode": 3,
+      "lora_channel": 4
+    }
+  ]
+}

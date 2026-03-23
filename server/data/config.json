@@ -1,0 +1,25 @@
+{
+  "collect": {
+    "modbus_timeout": 5,
+    "collect_cycle": 30,
+    "control_check_cycle": 2
+  },
+  "server": {
+    "local_mode": 1,
+    "server_ip": "30.24.100.58",
+    "server_port": 2404,
+    "timeout": 60
+  },
+  "control": {
+    "timeout": 60
+  },
+  "event": {
+    "event_max_num": 64
+  },
+  "log": {
+    "level": 4,
+    "backup": 3,
+    "max_size": 1000,
+    "display": 1
+  }
+}

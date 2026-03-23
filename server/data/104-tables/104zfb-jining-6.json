@@ -1,0 +1,14 @@
+{
+  "yc": [
+    { "index": 0, "name": "AGC全站理论有功", "inverter": 0, "factor": 0.001 },
+    { "index": 1, "name": "AGC可用容量", "inverter": 0, "factor": 0.001 },
+    { "index": 10, "name": "1号逆变器电压", "inverter": 1, "factor": 0.001 }
+  ],
+  "yx": [
+    { "index": 0, "name": "AGC投退状态", "inverter": 0 },
+    { "index": 8, "name": "1号逆变器发电", "inverter": 1 }
+  ],
+  "yt": [
+    { "index": 0, "name": "AGC有功遥调下发数值", "inverter": 0, "factor": 0.001 }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "inverter_max": 100,
+  "inverters": [
+    {
+      "index": 1,
+      "modbus_address": 1,
+      "lora_address": 1,
+      "serial_ref": 1,
+      "protocol": 2,
+      "model": "ginlong-3P10K"
+    },
+    {
+      "index": 2,
+      "modbus_address": 1,
+      "lora_address": 2,
+      "serial_ref": 1,
+      "protocol": 1,
+      "model": "huawei-SUN2000-100KTL-M2"
+    }
+  ]
+}
