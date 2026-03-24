@@ -56,6 +56,14 @@ function handleYcChange(payload) {
         );
         if (existing) {
           existing.value = point.value;
+        } else {
+          realtimeStore.yc.push({
+            index: point.ycnum,
+            inverter: Math.floor(point.ycnum / 100) || 0,
+            name: point.name || `YC_${point.ycnum}`,
+            value: point.value,
+          });
+          realtimeStore.yc.sort((a, b) => a.index - b.index);
         }
       }
     }
@@ -77,6 +85,14 @@ function handleYxChange(payload) {
         );
         if (existing) {
           existing.value = point.value;
+        } else {
+          realtimeStore.yx.push({
+            index: point.yxnum,
+            inverter: Math.floor(point.yxnum / 100) || 0,
+            name: point.name || `YX_${point.yxnum}`,
+            value: point.value,
+          });
+          realtimeStore.yx.sort((a, b) => a.index - b.index);
         }
       }
     }

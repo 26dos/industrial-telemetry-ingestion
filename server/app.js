@@ -12,6 +12,7 @@ const pointTableRoutes = require('./routes/pointTable');
 const table104Routes = require('./routes/table104');
 const systemRoutes = require('./routes/system');
 const { initMqtt } = require('./services/mqttService');
+const { initModbus } = require('./services/modbusService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,4 +38,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`[Server] 采集控制单元配置工具后端已启动 http://localhost:${PORT}`);
   initMqtt();
+  initModbus();
 });
