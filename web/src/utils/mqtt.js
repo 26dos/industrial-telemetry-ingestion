@@ -5,7 +5,7 @@
 import mqtt from 'mqtt'
 import { ref, onUnmounted } from 'vue'
 
-const BROKER_WS = 'ws://localhost:8083/mqtt'
+const BROKER_WS = 'ws://192.168.1.100:9001/mqtt'
 const DEVICE_ID = '001'
 
 let client = null

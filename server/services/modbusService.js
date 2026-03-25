@@ -8,6 +8,7 @@ const ModbusRTU = require('modbus-serial');
 const mqtt = require('mqtt');
 const fs = require('fs');
 const path = require('path');
+const { getRealtimeStore } = require('./mqttService');
 
 const DATA_DIR = path.join(__dirname, '../data');
 const BROKER = process.env.MQTT_BROKER || 'mqtt://localhost:1883';
@@ -367,6 +368,23 @@ function initModbus() {
       }
     }
   }
+
+  const store = getRealtimeStore();
+  for (const inv of invertersData.inverters) {
+    const table = pointTables[inv.model];
+    if (!table || !table.yt) continue;
+    for (const ytPoint of table.yt) {
+      const gIdx = globalIndex(inv.index, ytPoint.index);
+      if (!store.yt.find((item) => item.index === gIdx)) {
+        store.yt.push({
+          index: gIdx,
+          name: `逆变器${inv.index}-${ytPoint.name}`,
+        });
+      }
+    }
+  }
+  store.yt.sort((a, b) => a.index - b.index);
+  console.log(`[Modbus] 遥调点已注入 realtimeStore: ${store.yt.map((t) => t.index).join(', ')}`);
 
   mqttClient = mqtt.connect(BROKER, {
     clientId: `collector_modbus_${Date.now()}`,

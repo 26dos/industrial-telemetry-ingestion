@@ -76,26 +76,43 @@ const ytList = ref([])
 
 const { connect: connectMqtt, connected: mqttConnected, ycUpdates, yxUpdates } = useMqtt()
 
-// MQTT 变化推送 -> 合并到本地数据
 watch(ycUpdates, (data) => {
   if (!data?.inverters) return
+  const updated = [...ycData.value]
+  let changed = false
   for (const inv of data.inverters) {
     for (const pt of inv.yc_data || []) {
-      const found = ycData.value.find((item) => item.index === pt.ycnum)
-      if (found) found.value = pt.value
+      const idx = updated.findIndex((item) => item.index === pt.ycnum)
+      if (idx !== -1) {
+        updated[idx] = { ...updated[idx], value: pt.value }
+        changed = true
+      } else {
+        updated.push({ index: pt.ycnum, inverter: Math.floor(pt.ycnum / 100) || 0, name: pt.name || `YC_${pt.ycnum}`, value: pt.value })
+        changed = true
+      }
     }
   }
-})
+  if (changed) ycData.value = updated
+}, { deep: true })
 
 watch(yxUpdates, (data) => {
   if (!data?.inverters) return
+  const updated = [...yxData.value]
+  let changed = false
   for (const inv of data.inverters) {
     for (const pt of inv.yx_data || []) {
-      const found = yxData.value.find((item) => item.index === pt.yxnum)
-      if (found) found.value = pt.value
+      const idx = updated.findIndex((item) => item.index === pt.yxnum)
+      if (idx !== -1) {
+        updated[idx] = { ...updated[idx], value: pt.value }
+        changed = true
+      } else {
+        updated.push({ index: pt.yxnum, inverter: Math.floor(pt.yxnum / 100) || 0, name: pt.name || `YX_${pt.yxnum}`, value: pt.value })
+        changed = true
+      }
     }
   }
-})
+  if (changed) yxData.value = updated
+}, { deep: true })
 
 async function loadAll() {
   const [ycRes, yxRes, ytRes] = await Promise.all([
