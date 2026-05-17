@@ -1,200 +1,111 @@
-# 采集控制单元配置工具
+# collector
 
-面向工控机/采集控制单元的 Web 配置与实时监控系统。  
-通过 HTTP 接口管理业务配置，通过 MQTT 协议对接硬件设备、收发实时数据。
+Industrial telemetry ingestion and monitoring console for edge data collectors.
 
----
+This repo is a full-stack prototype for configuring an industrial collection
+unit, receiving real-time device telemetry, and managing protocol-specific
+point tables. It is intentionally not crypto-related: the system works with
+hardware-facing data streams such as MQTT, Modbus, serial devices, LoRa, and
+IEC 60870-5-104 style telemetry.
 
-## 系统架构
+## What It Demonstrates
 
-```
-┌─────────────────────────────────────────────────────┐
-│                     前端 (Vue 3)                      │
-│  Element Plus UI / Axios HTTP / MQTT.js WebSocket    │
-└───────┬─────────────────────────────────┬────────────┘
-        │ HTTP (POST / JSON)              │ MQTT over WS
-        ▼                                 ▼
-┌───────────────────┐         ┌────────────────────────┐
-│   后端 (Express)   │         │    MQTT Broker          │
-│  业务接口 27个      │         │  (Mosquitto / EMQX)    │
-│  配置/管理/监控     │◄───────►│  硬件数据收发           │
-└───────────────────┘         └────────────────────────┘
-        │                                 ▲
-        ▼                                 │
-┌───────────────────┐         ┌────────────────────────┐
-│   本地配置文件      │         │   采集控制单元 (硬件)    │
-│  JSON / 点表文件    │         │  逆变器 / 串口 / Lora   │
-└───────────────────┘         └────────────────────────┘
-```
+- **Real-time ingestion** from hardware devices over MQTT.
+- **Industrial protocol support** for Modbus and IEC 104-style telemetry.
+- **Edge device configuration** for network settings, serial ports, LoRa, and
+  inverter metadata.
+- **Point-table management** for inverter tables and 104 forwarding tables.
+- **Operational UI** built with Vue 3, Vite, Element Plus, Pinia, and Axios.
+- **Backend API service** built with Node.js, Express, mqtt.js, serialport, and
+  local JSON-backed configuration files.
 
----
-
-## 技术栈
-
-| 层级     | 技术                                    |
-|----------|----------------------------------------|
-| 前端     | Vue 3 + Vite + Element Plus + Vue Router + Pinia |
-| HTTP 通信 | Axios（统一 POST + JSON body）           |
-| 实时数据  | MQTT.js（浏览器端 WebSocket 连接 Broker） |
-| 后端     | Node.js + Express                       |
-| MQTT 服务 | mqtt.js（后端订阅/发布硬件数据）          |
-| 文件上传  | multer                                  |
-
----
-
-## 项目结构
+## Architecture
 
 ```
-Collector/
-├── README.md
-├── server/                     # 后端服务
-│   ├── package.json
-│   ├── app.js                  # 入口
-│   ├── data/                   # 模拟数据/配置文件
-│   │   ├── config.json
-│   │   ├── network.json
-│   │   ├── serials.json
-│   │   ├── inverters.json
-│   │   ├── inverter-tables/    # 逆变器点表文件
-│   │   └── 104-tables/         # 104转发表文件
-│   ├── routes/                 # HTTP 路由
-│   │   ├── config.js           # 系统配置
-│   │   ├── network.js          # 网络配置
-│   │   ├── lora.js             # 无线配置
-│   │   ├── serial.js           # 串口管理
-│   │   ├── inverter.js         # 逆变器管理
-│   │   ├── realtime.js         # 实时数据 (104)
-│   │   ├── pointTable.js       # 设备点表管理
-│   │   ├── table104.js         # 104点表管理
-│   │   └── system.js           # 系统信息
-│   └── services/
-│       └── mqttService.js      # MQTT 硬件通信服务
-│
-└── web/                        # 前端应用
-    ├── package.json
-    ├── vite.config.js
-    ├── index.html
-    └── src/
-        ├── main.js
-        ├── App.vue
-        ├── router/index.js
-        ├── stores/             # Pinia 状态管理
-        ├── api/                # HTTP 接口封装
-        │   └── index.js
-        ├── utils/
-        │   └── mqtt.js         # MQTT 实时数据客户端
-        ├── layout/
-        │   └── MainLayout.vue
-        └── views/              # 页面组件
-            ├── Login.vue
-            ├── SystemConfig.vue
-            ├── NetworkConfig.vue
-            ├── LoraConfig.vue
-            ├── SerialManage.vue
-            ├── InverterManage.vue
-            ├── RealtimeData.vue
-            ├── PointTable.vue
-            ├── Table104.vue
-            └── SystemInfo.vue
+Vue 3 operator console
+   |                         |
+   | HTTP JSON APIs          | MQTT over WebSocket
+   v                         v
+Express configuration API    MQTT broker
+   |                         ^
+   |                         |
+local config + point tables  edge collector / devices
+                             - inverters
+                             - serial devices
+                             - LoRa modules
+                             - Modbus / IEC 104 data
 ```
 
----
+## Repository Layout
 
-## 功能模块
+```
+collector/
+  server/
+    app.js                   Express service entrypoint
+    routes/                  configuration and monitoring APIs
+    services/                MQTT, Modbus, and IEC 104 services
+    data/                    local JSON config and point-table fixtures
 
-| 序号 | 模块          | 描述                                              | 通信方式  | 优先级 |
-|------|--------------|---------------------------------------------------|----------|--------|
-| 1    | 登录          | 前端固定口令验证，无后端接口                         | 前端本地  | 高     |
-| 2    | 系统配置      | 采集/服务/调控/事件/日志参数的查看与修改               | HTTP     | 高     |
-| 3    | 网络配置      | 工控机 IP/子网掩码/网关配置，重启网络                 | HTTP     | 高     |
-| 4    | 无线配置      | Lora 主节点参数（自研板卡版本支持）                   | HTTP     | 中     |
-| 5    | 串口管理      | 串口 CRUD（波特率/数据位/停止位/校验/模式等）          | HTTP     | 高     |
-| 6    | 逆变器管理    | 逆变器 CRUD（Modbus地址/Lora地址/协议/型号等）        | HTTP     | 高     |
-| 7    | 实时数据(104) | 遥测/遥信总召、遥调下发、变化实时推送                  | HTTP+MQTT | 高    |
-| 8    | 设备点表      | 逆变器点表列表/详情/上传/删除                         | HTTP     | 高     |
-| 9    | 104点表       | 104 转发表列表/详情/选择/上传/删除                    | HTTP     | 高     |
-| 10   | 报文检测      | 104/Modbus 报文查看                                | HTTP     | 低     |
-| 11   | 系统信息      | 版本号、CPU/内存使用率、重启服务                      | HTTP     | 中     |
+  web/
+    src/
+      views/                 operator screens
+      api/                   HTTP client wrapper
+      utils/mqtt.js          browser MQTT client
+      stores/                Pinia state
+      layout/                main console layout
 
----
+  tools/
+    modbus_simulator.py      local protocol testing helper
 
-## HTTP 接口总览（27 个，统一 POST + JSON）
+  docs/
+    hardware integration, deployment, and communication notes
+```
 
-### 系统配置
-| 接口                       | 描述           |
-|---------------------------|---------------|
-| `POST /api/getConfigInfo`  | 获取系统配置    |
-| `POST /api/setConfigInfo`  | 保存系统配置    |
+## Feature Areas
 
-### 网络配置
-| 接口                        | 描述           |
-|----------------------------|---------------|
-| `POST /api/getNetwork`      | 获取网络信息    |
-| `POST /api/setNetwork`      | 保存网络信息    |
-| `POST /api/restartNetwork`  | 重启网络       |
+| Area | Purpose | Interface |
+| --- | --- | --- |
+| Login | Local operator access for the console | Browser |
+| System config | Collection, service, control, event, and log settings | HTTP |
+| Network config | IP, subnet, gateway, and network restart controls | HTTP |
+| LoRa config | Wireless module parameters | HTTP |
+| Serial management | Serial port CRUD and protocol settings | HTTP |
+| Inverter management | Device metadata, Modbus address, protocol, and model config | HTTP |
+| Real-time telemetry | Telemetry polling, control commands, and change events | HTTP + MQTT |
+| Point tables | Upload, inspect, select, and delete device point tables | HTTP |
+| System info | Version, CPU/memory status, service restart | HTTP |
 
-### 无线配置 (Lora)
-| 接口                       | 描述           |
-|---------------------------|---------------|
-| `POST /api/getLoraInfo`    | 获取 Lora 配置  |
-| `POST /api/setLoraInfo`    | 保存 Lora 配置  |
+## API Shape
 
-### 串口管理
-| 接口                       | 描述             |
-|---------------------------|-----------------|
-| `POST /api/getSerialInfo`  | 获取串口配置列表  |
-| `POST /api/setSerialInfo`  | 保存串口配置      |
-| `POST /api/getSerialMax`   | 获取串口最大数量  |
+The backend exposes a set of JSON `POST` endpoints for configuration and
+operations. Examples:
 
-### 逆变器管理
-| 接口                         | 描述               |
-|-----------------------------|-------------------|
-| `POST /api/getInverterInfo`  | 获取逆变器配置列表  |
-| `POST /api/setInverterInfo`  | 保存逆变器配置      |
-| `POST /api/getInverterMax`   | 获取逆变器最大数量  |
+```text
+POST /api/getConfigInfo
+POST /api/setConfigInfo
+POST /api/getNetwork
+POST /api/setNetwork
+POST /api/getSerialInfo
+POST /api/setSerialInfo
+POST /api/getInverterInfo
+POST /api/setInverterInfo
+POST /api/getAllData/YC
+POST /api/getAllData/YX
+POST /api/control/YT
+POST /api/uploadInverterTableFile
+POST /api/upload104File
+POST /api/getSystemInfo
+```
 
-### 实时数据 (104)
-| 接口                          | 描述           |
-|------------------------------|---------------|
-| `POST /api/getAllData/YC`     | 总召遥测数据    |
-| `POST /api/getAllData/YX`     | 总召遥信数据    |
-| `POST /api/getControlList/YT` | 获取遥调控制列表 |
-| `POST /api/control/YT`       | 遥调下发       |
+MQTT topics carry real-time device updates:
 
-### 设备点表
-| 接口                                  | 描述                |
-|--------------------------------------|-------------------|
-| `POST /api/getInverterTableList`      | 获取逆变器点表列表   |
-| `POST /api/getInverterTableInfo`      | 获取逆变器点表详情   |
-| `POST /api/uploadInverterTableFile`   | 上传逆变器点表文件   |
-| `POST /api/deleteInverterTableFile`   | 删除逆变器点表文件   |
+```text
+device/{id}/ycchange
+device/{id}/yxchange
+```
 
-### 104 点表
-| 接口                        | 描述                  |
-|----------------------------|-----------------------|
-| `POST /api/get104List`      | 获取 104 转发表列表    |
-| `POST /api/get104Info`      | 获取 104 转发表详情    |
-| `POST /api/set104File`      | 设置使用的 104 转发表  |
-| `POST /api/upload104File`   | 上传 104 转发表文件    |
-| `POST /api/delete104File`   | 删除 104 转发表文件    |
+Example payload:
 
-### 系统信息
-| 接口                       | 描述             |
-|---------------------------|-----------------|
-| `POST /api/getVersion`     | 获取程序版本      |
-| `POST /api/getSystemInfo`  | 获取系统资源信息   |
-| `POST /api/restart`        | 重启服务          |
-
----
-
-## MQTT 接口（硬件 → 前端 实时推送）
-
-| 话题                       | 方向         | 描述                |
-|---------------------------|-------------|-------------------|
-| `device/{id}/ycchange`    | 硬件 → 前端  | 遥测变化上送         |
-| `device/{id}/yxchange`    | 硬件 → 前端  | 遥信变化上送         |
-
-Payload 结构：
 ```json
 {
   "device_id": "data_collector_001",
@@ -203,37 +114,53 @@ Payload 结构：
     {
       "inverter_id": "inv_001",
       "yc_data": [
-        { "ycnum": 1, "value": 300.0, "name": "电压", "unit": "V", "quality": 1 }
+        {
+          "ycnum": 1,
+          "value": 300.0,
+          "name": "voltage",
+          "unit": "V",
+          "quality": 1
+        }
       ]
     }
   ]
 }
 ```
 
----
+## Quick Start
 
-## 快速启动
-
-### 后端
+Backend:
 
 ```bash
 cd server
 npm install
-npm run dev        # 开发模式（端口 3000）
+npm run dev
 ```
 
-### 前端
+Frontend:
 
 ```bash
 cd web
 npm install
-npm run dev        # 开发模式（端口 5173，代理 → 3000）
+npm run dev
 ```
 
-### 环境变量
+Useful environment variables:
 
-| 变量              | 默认值                  | 说明                |
-|------------------|------------------------|-------------------|
-| `PORT`           | `3000`                 | 后端服务端口         |
-| `MQTT_BROKER`    | `mqtt://localhost:1883` | MQTT Broker 地址    |
-| `MQTT_DEVICE_ID` | `001`                  | 采集单元设备 ID      |
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `3000` | Express API port |
+| `MQTT_BROKER` | `mqtt://localhost:1883` | MQTT broker address |
+| `MQTT_DEVICE_ID` | `001` | Collector device id |
+
+## Why This Repo Belongs In The Portfolio
+
+This is a practical ingestion system rather than a polished demo. It shows the
+same engineering muscles needed in data pipeline work:
+
+- protocol integration
+- real-time event handling
+- schema-like point-table mapping
+- operator-facing monitoring
+- configuration management for edge devices
+- local simulators and integration docs
