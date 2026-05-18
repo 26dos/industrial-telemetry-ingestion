@@ -8,6 +8,18 @@ point tables. It is intentionally not crypto-related: the system works with
 hardware-facing data streams such as MQTT, Modbus, serial devices, LoRa, and
 IEC 60870-5-104 style telemetry.
 
+## Demo Snapshot
+
+![Industrial telemetry ingestion demo](docs/assets/screenshots/telemetry-demo.png)
+
+The demo shows the operator-facing path from device telemetry to a live
+configuration console: devices publish MQTT events, the backend normalizes
+protocol data, point tables map raw values, and the Vue console makes the
+collector state visible.
+
+See [docs/demo-walkthrough.md](docs/demo-walkthrough.md) for a sequence diagram,
+entity graph, and sample telemetry payload.
+
 ## What It Demonstrates
 
 - **Real-time ingestion** from hardware devices over MQTT.
