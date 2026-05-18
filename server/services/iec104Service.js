@@ -1,14 +1,14 @@
 /**
- * IEC 60870-5-104 从站集成服务
+ * IEC 60870-5-104 slave integration service
  *
- * 将 IEC 104 协议栈与系统业务逻辑连接：
- * - 读取 104 转发点表，建立 IOA ↔ realtimeStore 映射
- * - 处理总召唤（C_IC_NA_1）：返回全部 YC/YX
- * - 处理遥调（C_SE_NC_1 / C_SC_NA_1）：转发到 MQTT
- * - 变化数据主动上送（spontaneous）
- * - 时钟同步（C_CS_NA_1）
- * - 计数器召唤（C_CI_NA_1）
- * - 事件记录（YX 变位带时标）
+ * Connects the IEC 104 protocol stack to application logic:
+ * - loads IEC 104 forwarding tables and builds IOA-to-realtimeStore mappings
+ * - handleinterrogation (C_IC_NA_1):return all YC/YX
+ * - handles setpoints (C_SE_NC_1 / C_SC_NA_1): forwards to MQTT
+ * - sends spontaneous change events
+ * - clock synchronization (C_CS_NA_1)
+ * - counter interrogation (C_CI_NA_1)
+ * - records timestamped status-change events
  */
 const fs = require('fs');
 const path = require('path');
@@ -19,14 +19,14 @@ const { getRealtimeStore, publishControl } = require('./mqttService');
 const DATA_DIR = path.join(__dirname, '../data');
 
 let server = null;
-let pointTable = null;  // 当前启用的 104 转发表
+let pointTable = null;  // currently enabled IEC 104 forwarding table
 let casdu = 1;
 let changeTimer = null;
 let lastSnapshot = { yc: {}, yx: {} };
 let eventBuffer = [];
 let eventMaxNum = 64;
 
-// ==================== 配置加载 ====================
+// ==================== configuration loading ====================
 
 function readJSON(filename) {
   return JSON.parse(fs.readFileSync(path.join(DATA_DIR, filename), 'utf-8'));
@@ -46,19 +46,19 @@ function loadPointTable() {
   try {
     const useData = readJSON('104-use.json');
     if (!useData.use) {
-      console.warn('[IEC104] 未启用任何 104 转发表');
+      console.warn('[IEC104] no IEC 104 forwarding table is enabled');
       return null;
     }
     const table = readJSON(`104-tables/${useData.use}.json`);
-    console.log(`[IEC104] 点表已加载: ${useData.use}`);
+    console.log(`[IEC104] point table loaded: ${useData.use}`);
     return table;
   } catch (e) {
-    console.error(`[IEC104] 点表加载失败: ${e.message}`);
+    console.error(`[IEC104] point table load failed: ${e.message}`);
     return null;
   }
 }
 
-// ==================== IOA 映射 ====================
+// ==================== IOA mapping ====================
 
 function ycIndexToIOA(index) {
   return proto.IOA_BASE_YC + index;
@@ -80,13 +80,13 @@ function yxIOAToIndex(ioa) {
   return ioa - proto.IOA_BASE_YX;
 }
 
-// ==================== 总召唤处理 ====================
+// ==================== interrogation handling ====================
 
 function handleInterrogation(connId, asdu, rawBuf) {
   if (!pointTable) return;
 
   const intInfo = proto.parseInterrogation(asdu.infoBuffer);
-  console.log(`[IEC104] ${connId} 总召唤 QOI=${intInfo?.qoi || 20}`);
+  console.log(`[IEC104] ${connId} interrogation QOI=${intInfo?.qoi || 20}`);
 
   // ACT_CON
   const actConBuf = proto.buildASDU(
@@ -97,7 +97,7 @@ function handleInterrogation(connId, asdu, rawBuf) {
 
   const store = getRealtimeStore();
 
-  // 发送全部 YC — M_ME_NC_1 (Type 13, COT=20 interrogated)
+  // send all YC — M_ME_NC_1 (Type 13, COT=20 interrogated)
   if (pointTable.yc && pointTable.yc.length > 0) {
     const MAX_POINTS_PER_FRAME = 20;
     for (let i = 0; i < pointTable.yc.length; i += MAX_POINTS_PER_FRAME) {
@@ -117,7 +117,7 @@ function handleInterrogation(connId, asdu, rawBuf) {
     }
   }
 
-  // 发送全部 YX — M_SP_NA_1 (Type 1, COT=20 interrogated)
+  // send all YX — M_SP_NA_1 (Type 1, COT=20 interrogated)
   if (pointTable.yx && pointTable.yx.length > 0) {
     const points = pointTable.yx.map((pt) => {
       const storeItem = store.yx.find((s) => s.index === pt.index);
@@ -138,13 +138,13 @@ function handleInterrogation(connId, asdu, rawBuf) {
   );
   server.sendTo(connId, actTermBuf);
 
-  console.log(`[IEC104] ${connId} 总召唤完成 (YC: ${pointTable.yc?.length || 0}, YX: ${pointTable.yx?.length || 0})`);
+  console.log(`[IEC104] ${connId} interrogation complete (YC: ${pointTable.yc?.length || 0}, YX: ${pointTable.yx?.length || 0})`);
 }
 
-// ==================== 计数器召唤处理 ====================
+// ==================== counter interrogation handling ====================
 
 function handleCounterInterrogation(connId, asdu) {
-  console.log(`[IEC104] ${connId} 计数器召唤`);
+  console.log(`[IEC104] ${connId} counter interrogation`);
 
   const actConBuf = proto.buildASDU(
     proto.C_CI_NA_1, proto.COT.ACTCON, casdu,
@@ -159,13 +159,13 @@ function handleCounterInterrogation(connId, asdu) {
   server.sendTo(connId, actTermBuf);
 }
 
-// ==================== 时钟同步处理 ====================
+// ==================== clock synchronization handling ====================
 
 function handleClockSync(connId, asdu) {
   const syncInfo = proto.parseClockSync(asdu.infoBuffer);
-  console.log(`[IEC104] ${connId} 时钟同步: ${syncInfo?.time?.toISOString()}`);
+  console.log(`[IEC104] ${connId} clock synchronization: ${syncInfo?.time?.toISOString()}`);
 
-  // 构建响应：IOA + 当前时间
+  // build response: IOA plus current time
   const ioaBuf = proto.encodeIOA(0);
   const timeBuf = proto.encodeCP56Time2a(new Date());
   const infoBuf = Buffer.concat([ioaBuf, timeBuf]);
@@ -177,13 +177,13 @@ function handleClockSync(connId, asdu) {
   server.sendTo(connId, actConBuf);
 }
 
-// ==================== 遥调处理 ====================
+// ==================== setpoint handling ====================
 
 function handleSetPointFloat(connId, asdu, rawBuf) {
   const cmd = proto.parseSetPointFloat(asdu.infoBuffer);
   if (!cmd) return;
 
-  console.log(`[IEC104] ${connId} 设点命令: IOA=${cmd.ioa}, value=${cmd.value}, select=${cmd.select}`);
+  console.log(`[IEC104] ${connId} setpoint command: IOA=${cmd.ioa}, value=${cmd.value}, select=${cmd.select}`);
 
   // ACT_CON
   const actConBuf = proto.buildASDU(
@@ -200,9 +200,9 @@ function handleSetPointFloat(connId, asdu, rawBuf) {
         const factor = ytPoint.factor || 1;
         const realValue = factor !== 0 ? cmd.value / factor : cmd.value;
         publishControl(ytIndex, realValue);
-        console.log(`[IEC104] 遥调转发 MQTT: index=${ytIndex}, value=${realValue}`);
+        console.log(`[IEC104] forwarded setpoint to MQTT: index=${ytIndex}, value=${realValue}`);
       } else {
-        console.warn(`[IEC104] 遥调点 index=${ytIndex} 不在点表中`);
+        console.warn(`[IEC104] setpoint index=${ytIndex} is not present in the point table`);
       }
     }
   }
@@ -219,7 +219,7 @@ function handleSingleCommand(connId, asdu) {
   const cmd = proto.parseSingleCommand(asdu.infoBuffer);
   if (!cmd) return;
 
-  console.log(`[IEC104] ${connId} 单命令: IOA=${cmd.ioa}, value=${cmd.value}, select=${cmd.select}`);
+  console.log(`[IEC104] ${connId} single command: IOA=${cmd.ioa}, value=${cmd.value}, select=${cmd.select}`);
 
   const actConBuf = proto.buildASDU(
     proto.C_SC_NA_1, proto.COT.ACTCON, casdu,
@@ -230,7 +230,7 @@ function handleSingleCommand(connId, asdu) {
   if (!cmd.select) {
     const ytIndex = ytIOAToIndex(cmd.ioa);
     publishControl(ytIndex, cmd.value);
-    console.log(`[IEC104] 单命令转发 MQTT: index=${ytIndex}, value=${cmd.value}`);
+    console.log(`[IEC104] forwarded single command to MQTT: index=${ytIndex}, value=${cmd.value}`);
   }
 
   const actTermBuf = proto.buildASDU(
@@ -240,7 +240,7 @@ function handleSingleCommand(connId, asdu) {
   server.sendTo(connId, actTermBuf);
 }
 
-// ==================== 变化数据上送 ====================
+// ==================== change-data upload ====================
 
 function takeSnapshot() {
   const store = getRealtimeStore();
@@ -260,7 +260,7 @@ function detectAndSendChanges() {
   const current = takeSnapshot();
   const store = getRealtimeStore();
 
-  // YC 变化检测
+  // YC change detection
   const ycChanges = [];
   if (pointTable.yc) {
     for (const pt of pointTable.yc) {
@@ -280,10 +280,10 @@ function detectAndSendChanges() {
   if (ycChanges.length > 0) {
     const asduBuf = proto.buildM_ME_NC_1(proto.COT.SPONTANEOUS, casdu, ycChanges);
     server.broadcast(asduBuf);
-    console.log(`[IEC104] 遥测变化上送: ${ycChanges.length} 个点`);
+    console.log(`[IEC104] measurement changes sent: ${ycChanges.length}  points`);
   }
 
-  // YX 变化检测
+  // YX change detection
   const yxChanges = [];
   if (pointTable.yx) {
     for (const pt of pointTable.yx) {
@@ -296,7 +296,7 @@ function detectAndSendChanges() {
           quality: 0,
         });
 
-        // 同时记录带时标事件
+        // also record a timestamped event
         addEvent({
           ioa: yxIndexToIOA(pt.index),
           value: curVal,
@@ -308,11 +308,11 @@ function detectAndSendChanges() {
   }
 
   if (yxChanges.length > 0) {
-    // 不带时标的变化上送
+    // change upload without timestamp
     const asduBuf = proto.buildM_SP_NA_1(proto.COT.SPONTANEOUS, casdu, yxChanges);
     server.broadcast(asduBuf);
 
-    // 带时标的事件上送
+    // timestamped event upload
     const tbPoints = yxChanges.map((pt) => ({
       ...pt,
       timestamp: new Date(),
@@ -320,13 +320,13 @@ function detectAndSendChanges() {
     const tbAsdu = proto.buildM_SP_TB_1(proto.COT.SPONTANEOUS, casdu, tbPoints);
     server.broadcast(tbAsdu);
 
-    console.log(`[IEC104] 遥信变化上送: ${yxChanges.length} 个点 (含时标事件)`);
+    console.log(`[IEC104] status changes sent: ${yxChanges.length}  points (including timestamped events)`);
   }
 
   lastSnapshot = current;
 }
 
-// ==================== 事件缓冲 ====================
+// ==================== event buffer ====================
 
 function addEvent(event) {
   eventBuffer.push(event);
@@ -343,7 +343,7 @@ function clearEvents() {
   eventBuffer = [];
 }
 
-// ==================== ASDU 路由 ====================
+// ==================== ASDU routing ====================
 
 function handleASDU(connId, asdu, rawBuf) {
   switch (asdu.typeId) {
@@ -367,19 +367,19 @@ function handleASDU(connId, asdu, rawBuf) {
       handleSingleCommand(connId, asdu);
       break;
     default:
-      console.log(`[IEC104] ${connId} 未处理的 TypeID: ${asdu.typeId}`);
+      console.log(`[IEC104] ${connId} unhandled TypeID: ${asdu.typeId}`);
       break;
   }
 }
 
-// ==================== 初始化 / 停止 ====================
+// ==================== initialization / stop ====================
 
 function initIEC104() {
   let cfg;
   try {
     cfg = loadConfig();
   } catch (e) {
-    console.error(`[IEC104] 配置加载失败: ${e.message}`);
+    console.error(`[IEC104] configuration load failed: ${e.message}`);
     return;
   }
 
@@ -391,10 +391,10 @@ function initIEC104() {
   });
 
   server.on('connectionStarted', (connId) => {
-    // 发送初始化结束 M_EI_NA_1
+    // send end-of-initialization M_EI_NA_1
     const eiAsdu = proto.buildM_EI_NA_1(casdu);
     server.sendTo(connId, eiAsdu);
-    console.log(`[IEC104] ${connId} 已发送初始化结束`);
+    console.log(`[IEC104] ${connId} sent end-of-initialization`);
   });
 
   server.on('asdu', (connId, asdu, rawBuf) => {
@@ -402,20 +402,20 @@ function initIEC104() {
   });
 
   server.on('connectionClosed', (connId) => {
-    // 连接断开时无需特殊处理
+    // no special handling required when the connection closes
   });
 
   server.start();
 
-  // 初始快照
+  // initial snapshot
   lastSnapshot = takeSnapshot();
 
-  // 启动变化检测定时器
+  // start change-detection timer
   changeTimer = setInterval(() => {
     detectAndSendChanges();
   }, cfg.collectCycle);
 
-  console.log(`[IEC104] 从站服务已启动 (端口: ${cfg.port}, 变化检测周期: ${cfg.collectCycle / 1000}s)`);
+  console.log(`[IEC104] slave service started (port: ${cfg.port}, change-detection interval: ${cfg.collectCycle / 1000}s)`);
 }
 
 function stopIEC104() {
@@ -427,7 +427,7 @@ function stopIEC104() {
     server.stop();
     server = null;
   }
-  console.log('[IEC104] 从站服务已停止');
+  console.log('[IEC104] slaveservicestopped');
 }
 
 module.exports = { initIEC104, stopIEC104, getEvents, clearEvents };

@@ -37,7 +37,7 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`[Server] 采集控制单元配置工具后端已启动 http://localhost:${PORT}`);
+  console.log(`[Server] Industrial telemetry ingestion backend started http://localhost:${PORT}`);
   initMqtt();
   initModbus();
   initIEC104();

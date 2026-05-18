@@ -11,7 +11,7 @@ function readSerials() {
 router.post('/getSerialInfo', (req, res) => {
   try {
     const store = readSerials();
-    res.json({ code: 200, success: true, data: store.serials, msg: '操作成功' });
+    res.json({ code: 200, success: true, data: store.serials, msg: 'Operation successful' });
   } catch (e) {
     res.json({ code: 500, success: false, data: null, msg: e.message });
   }
@@ -22,11 +22,11 @@ router.post('/setSerialInfo', (req, res) => {
     const { serials } = req.body;
     const store = readSerials();
     if (serials.length > store.serial_max) {
-      return res.json({ code: 400, success: false, data: null, msg: `串口数量不能超过${store.serial_max}` });
+      return res.json({ code: 400, success: false, data: null, msg: `Serial port count cannot exceed ${store.serial_max}` });
     }
     store.serials = serials;
     fs.writeFileSync(SERIAL_PATH, JSON.stringify(store, null, 2), 'utf-8');
-    res.json({ code: 200, success: true, data: null, msg: '操作成功' });
+    res.json({ code: 200, success: true, data: null, msg: 'Operation successful' });
   } catch (e) {
     res.json({ code: 500, success: false, data: null, msg: e.message });
   }
@@ -35,7 +35,7 @@ router.post('/setSerialInfo', (req, res) => {
 router.post('/getSerialMax', (req, res) => {
   try {
     const store = readSerials();
-    res.json({ code: 200, success: true, data: { serial_max: store.serial_max }, msg: '操作成功' });
+    res.json({ code: 200, success: true, data: { serial_max: store.serial_max }, msg: 'Operation successful' });
   } catch (e) {
     res.json({ code: 500, success: false, data: null, msg: e.message });
   }

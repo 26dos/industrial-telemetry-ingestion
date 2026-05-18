@@ -1,6 +1,6 @@
 /**
- * MQTT 客户端 — 前端直连 Broker（WebSocket）
- * 用于接收硬件设备上送的遥测/遥信变化数据
+ * MQTT client — frontend connects directly to the broker (WebSocket)
+ * Receives measurement/status changes from field devices
  */
 import mqtt from 'mqtt'
 import { ref, onUnmounted } from 'vue'
@@ -25,22 +25,22 @@ export function useMqtt() {
 
     client.on('connect', () => {
       connected.value = true
-      const ycTopic = `device/${DEVICE_ID}/ycchange`
-      const yxTopic = `device/${DEVICE_ID}/yxchange`
+      const ycTopic = `device/${DEVICE_ID}/yc/change`
+      const yxTopic = `device/${DEVICE_ID}/yx/change`
       client.subscribe([ycTopic, yxTopic])
-      console.log('[MQTT] 前端已连接，订阅:', ycTopic, yxTopic)
+      console.log('[MQTT] frontend connected; subscribed to:', ycTopic, yxTopic)
     })
 
     client.on('message', (topic, payload) => {
       try {
         const data = JSON.parse(payload.toString())
-        if (topic.endsWith('/ycchange')) {
+        if (topic.endsWith('/yc/change')) {
           ycUpdates.value = data
-        } else if (topic.endsWith('/yxchange')) {
+        } else if (topic.endsWith('/yx/change')) {
           yxUpdates.value = data
         }
       } catch (e) {
-        console.error('[MQTT] 消息解析失败', e)
+        console.error('[MQTT] Message parse failed', e)
       }
     })
 
@@ -49,7 +49,7 @@ export function useMqtt() {
     })
 
     client.on('error', (err) => {
-      console.error('[MQTT] 错误:', err.message)
+      console.error('[MQTT] Error:', err.message)
     })
   }
 

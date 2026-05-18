@@ -15,7 +15,7 @@ router.post('/getInverterTableList', (req, res) => {
     const files = fs.readdirSync(TABLE_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => f.replace('.json', ''));
-    res.json({ code: 200, success: true, data: files, msg: '操作成功' });
+    res.json({ code: 200, success: true, data: files, msg: 'Operation successful' });
   } catch (e) {
     res.json({ code: 500, success: false, data: null, msg: e.message });
   }
@@ -26,10 +26,10 @@ router.post('/getInverterTableInfo', (req, res) => {
     const { name } = req.body;
     const filePath = path.join(TABLE_DIR, `${name}.json`);
     if (!fs.existsSync(filePath)) {
-      return res.json({ code: 404, success: false, data: null, msg: '点表文件不存在' });
+      return res.json({ code: 404, success: false, data: null, msg: 'Point table file does not exist' });
     }
     const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    res.json({ code: 200, success: true, data, msg: '操作成功' });
+    res.json({ code: 200, success: true, data, msg: 'Operation successful' });
   } catch (e) {
     res.json({ code: 500, success: false, data: null, msg: e.message });
   }
@@ -38,13 +38,13 @@ router.post('/getInverterTableInfo', (req, res) => {
 router.post('/uploadInverterTableFile', upload.single('file'), (req, res) => {
   try {
     if (!req.file) {
-      return res.json({ code: 400, success: false, data: null, msg: '未上传文件' });
+      return res.json({ code: 400, success: false, data: null, msg: 'No file uploaded' });
     }
     const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf-8');
     const baseName = path.parse(originalName).name;
     const dest = path.join(TABLE_DIR, `${baseName}.json`);
     fs.renameSync(req.file.path, dest);
-    res.json({ code: 200, success: true, data: null, msg: '上传成功' });
+    res.json({ code: 200, success: true, data: null, msg: 'Uploaded successfully' });
   } catch (e) {
     res.json({ code: 500, success: false, data: null, msg: e.message });
   }
@@ -57,7 +57,7 @@ router.post('/deleteInverterTableFile', (req, res) => {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
-    res.json({ code: 200, success: true, data: null, msg: '删除成功' });
+    res.json({ code: 200, success: true, data: null, msg: 'Deleted successfully' });
   } catch (e) {
     res.json({ code: 500, success: false, data: null, msg: e.message });
   }

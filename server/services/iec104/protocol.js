@@ -1,15 +1,15 @@
 /**
- * IEC 60870-5-104 协议编解码层
+ * IEC 60870-5-104 protocol codec layer
  *
- * 实现 APCI/ASDU 帧的二进制编码与解码，零外部依赖。
- * 参考标准：IEC 60870-5-104:2006, IEC 60870-5-101:2003
+ * Implements APCI/ASDU binary encoding and decoding with zero external dependencies.
+ * References:IEC 60870-5-104:2006, IEC 60870-5-101:2003
  */
 
-// ==================== 常量 ====================
+// ==================== constants ====================
 
 const START_BYTE = 0x68;
 
-// U-frame 控制字节
+// U-frame control bytes
 const U_STARTDT_ACT  = 0x07;
 const U_STARTDT_CON  = 0x0B;
 const U_STOPDT_ACT   = 0x13;
@@ -17,23 +17,23 @@ const U_STOPDT_CON   = 0x23;
 const U_TESTFR_ACT   = 0x43;
 const U_TESTFR_CON   = 0x83;
 
-// ASDU Type ID — 监视方向（从站 → 主站）
-const M_SP_NA_1 = 1;   // 单点信息（遥信）
-const M_SP_TB_1 = 30;  // 单点信息 + CP56Time2a 时标
-const M_ME_NC_1 = 13;  // 短浮点测量值（遥测）
-const M_ME_TF_1 = 36;  // 短浮点测量值 + CP56Time2a 时标
-const M_EI_NA_1 = 70;  // 初始化结束
+// ASDU Type ID — monitor direction (slave to master)
+const M_SP_NA_1 = 1;   // single-point information (Status Signals)
+const M_SP_TB_1 = 30;  // single-point information + CP56Time2a timestamp
+const M_ME_NC_1 = 13;  // short floating-point measurement value (Measurements)
+const M_ME_TF_1 = 36;  // short floating-point measurement value + CP56Time2a timestamp
+const M_EI_NA_1 = 70;  // end of initialization
 
-// ASDU Type ID — 控制方向（主站 → 从站）
-const C_SC_NA_1 = 45;  // 单命令
-const C_SE_NA_1 = 48;  // 设点命令，归一化值
-const C_SE_NB_1 = 49;  // 设点命令，标度化值
-const C_SE_NC_1 = 50;  // 设点命令，短浮点
+// ASDU Type ID — control direction (master to slave)
+const C_SC_NA_1 = 45;  // single command
+const C_SE_NA_1 = 48;  // setpoint command, normalized value
+const C_SE_NB_1 = 49;  // setpoint command, scaled value
+const C_SE_NC_1 = 50;  // setpoint command, short float
 
-// ASDU Type ID — 系统命令
-const C_IC_NA_1 = 100;  // 总召唤
-const C_CI_NA_1 = 101;  // 计数器召唤
-const C_CS_NA_1 = 103;  // 时钟同步
+// ASDU Type ID — system commands
+const C_IC_NA_1 = 100;  // interrogation
+const C_CI_NA_1 = 101;  // counter interrogation
+const C_CS_NA_1 = 103;  // clock synchronization
 
 // Cause of Transmission (COT)
 const COT = {
@@ -66,7 +66,7 @@ const QDS_SB = 0x20;  // substituted
 const QDS_NT = 0x40;  // not topical
 const QDS_IV = 0x80;  // invalid
 
-// IOA base addresses (电力行业惯例)
+// IOA base addresses (power-industry convention)
 const IOA_BASE_YC = 0x4001;  // 16385
 const IOA_BASE_YX = 0x0001;  // 1
 const IOA_BASE_YT = 0x6001;  // 24577
@@ -76,7 +76,7 @@ const FRAME_U = 'U';
 const FRAME_S = 'S';
 const FRAME_I = 'I';
 
-// ==================== APCI 编码 ====================
+// ==================== APCI encoding ====================
 
 function buildUFrame(ctrlByte) {
   const buf = Buffer.alloc(6);
@@ -113,7 +113,7 @@ function buildIFrame(txSeq, rxSeq, asduBuffer) {
   return buf;
 }
 
-// ==================== ASDU 编码 ====================
+// ==================== ASDU encoding ====================
 
 function encodeFloat(value) {
   const buf = Buffer.alloc(4);
@@ -163,14 +163,14 @@ function decodeIOA(buffer, offset) {
 }
 
 /**
- * 构建 ASDU
- * @param {number} typeId - ASDU 类型标识
- * @param {number} cot - 传送原因
- * @param {number} casdu - 公共地址
- * @param {Buffer} infoObjectsBuffer - 信息对象字节（已编码）
- * @param {number} numObjects - 信息对象数量
- * @param {boolean} sq - SQ 位（连续 IOA）
- * @param {number} [origAddr=0] - 源发站地址
+ * Build an ASDU
+ * @param {number} typeId - ASDU type identifier
+ * @param {number} cot - cause of transmission
+ * @param {number} casdu - common address
+ * @param {Buffer} infoObjectsBuffer - encoded information-object bytes
+ * @param {number} numObjects - number of information objects
+ * @param {boolean} sq - SQ bit for sequential IOA
+ * @param {number} [origAddr=0] - originator address
  */
 function buildASDU(typeId, cot, casdu, infoObjectsBuffer, numObjects, sq, origAddr) {
   const buf = Buffer.alloc(6 + infoObjectsBuffer.length);
@@ -183,10 +183,10 @@ function buildASDU(typeId, cot, casdu, infoObjectsBuffer, numObjects, sq, origAd
   return buf;
 }
 
-// ==================== 监视方向 ASDU 构建 ====================
+// ==================== monitor-direction ASDU builders ====================
 
 /**
- * M_SP_NA_1 (Type 1) — 单点信息（遥信），不带时标
+ * M_SP_NA_1 (Type 1) — single-point information (Status Signals)，without timestamp
  * @param {Array<{ioa: number, value: number, quality: number}>} points
  */
 function buildM_SP_NA_1(cot, casdu, points) {
@@ -200,7 +200,7 @@ function buildM_SP_NA_1(cot, casdu, points) {
 }
 
 /**
- * M_SP_TB_1 (Type 30) — 单点信息 + CP56Time2a 时标
+ * M_SP_TB_1 (Type 30) — single-point information + CP56Time2a timestamp
  */
 function buildM_SP_TB_1(cot, casdu, points) {
   const parts = [];
@@ -214,7 +214,7 @@ function buildM_SP_TB_1(cot, casdu, points) {
 }
 
 /**
- * M_ME_NC_1 (Type 13) — 短浮点测量值（遥测），不带时标
+ * M_ME_NC_1 (Type 13) — short floating-point measurement value (Measurements)，without timestamp
  */
 function buildM_ME_NC_1(cot, casdu, points) {
   const parts = [];
@@ -227,7 +227,7 @@ function buildM_ME_NC_1(cot, casdu, points) {
 }
 
 /**
- * M_ME_TF_1 (Type 36) — 短浮点测量值 + CP56Time2a 时标
+ * M_ME_TF_1 (Type 36) — short floating-point measurement value + CP56Time2a timestamp
  */
 function buildM_ME_TF_1(cot, casdu, points) {
   const parts = [];
@@ -241,28 +241,28 @@ function buildM_ME_TF_1(cot, casdu, points) {
 }
 
 /**
- * M_EI_NA_1 (Type 70) — 初始化结束
+ * M_EI_NA_1 (Type 70) — end of initialization
  */
 function buildM_EI_NA_1(casdu) {
   const ioa = encodeIOA(0);
-  const coi = Buffer.from([0x00]); // COI: 0=当地手动复位
+  const coi = Buffer.from([0x00]); // COI: 0=local manual reset
   return buildASDU(M_EI_NA_1, COT.INITIALIZED, casdu, Buffer.concat([ioa, coi]), 1, false);
 }
 
-// ==================== 控制方向 ASDU 确认 ====================
+// ==================== control-direction ASDU acknowledgement ====================
 
 /**
- * 构建控制命令的 ACT_CON / ACT_TERM 确认
+ * Build control-command ACT_CON / ACT_TERM Confirm
  */
 function buildControlConfirm(typeId, cot, casdu, infoBuffer) {
   return buildASDU(typeId, cot, casdu, infoBuffer, 1, false);
 }
 
-// ==================== APCI 解码 ====================
+// ==================== APCI decoding ====================
 
 /**
- * 从 TCP 数据流中解析 APDU 帧
- * @param {Buffer} buffer - 从 0x68 开始的完整 APDU
+ * Parse an APDU frame from a TCP stream
+ * @param {Buffer} buffer - from 0x68 complete APDU starting at 0x68
  * @returns {{ type: string, ctrl: object, asdu: Buffer|null, length: number }}
  */
 function parseAPDU(buffer) {
@@ -306,7 +306,7 @@ function parseAPDU(buffer) {
 }
 
 /**
- * 解析 ASDU
+ * Parse ASDU
  * @param {Buffer} asduBuf
  * @returns {{ typeId, sq, numObjects, cot, origAddr, casdu, infoBuffer }}
  */
@@ -328,7 +328,7 @@ function parseASDU(asduBuf) {
 }
 
 /**
- * 从 C_SE_NC_1 (Type 50) 信息体中解析设点值
+ * from C_SE_NC_1 (Type 50) information object body
  */
 function parseSetPointFloat(infoBuffer) {
   if (infoBuffer.length < 8) return null;
@@ -340,7 +340,7 @@ function parseSetPointFloat(infoBuffer) {
 }
 
 /**
- * 从 C_SC_NA_1 (Type 45) 信息体中解析单命令
+ * from C_SC_NA_1 (Type 45) single-command information object body
  */
 function parseSingleCommand(infoBuffer) {
   if (infoBuffer.length < 4) return null;
@@ -352,17 +352,17 @@ function parseSingleCommand(infoBuffer) {
 }
 
 /**
- * 从 C_IC_NA_1 (Type 100) 信息体中解析总召唤限定词
+ * from C_IC_NA_1 (Type 100) interrogation qualifier information object body
  */
 function parseInterrogation(infoBuffer) {
   if (infoBuffer.length < 4) return null;
   const ioa = decodeIOA(infoBuffer, 0);
-  const qoi = infoBuffer[3]; // 20 = 站总召
+  const qoi = infoBuffer[3]; // 20 = station interrogation
   return { ioa, qoi };
 }
 
 /**
- * 从 C_CI_NA_1 (Type 101) 信息体中解析计数器召唤限定词
+ * from C_CI_NA_1 (Type 101) counter interrogation qualifier information object body
  */
 function parseCounterInterrogation(infoBuffer) {
   if (infoBuffer.length < 4) return null;
@@ -372,7 +372,7 @@ function parseCounterInterrogation(infoBuffer) {
 }
 
 /**
- * 从 C_CS_NA_1 (Type 103) 信息体中解析时钟
+ * from C_CS_NA_1 (Type 103) clock information object body
  */
 function parseClockSync(infoBuffer) {
   if (infoBuffer.length < 10) return null;

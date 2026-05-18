@@ -1,30 +1,30 @@
 {
   "yc": [
-    { "index": 1, "name": "A相电压", "register": 32069, "data_type": "U16", "byte_order": "ABCD", "factor": "0.1", "dead_zone": "0.1" },
-    { "index": 2, "name": "B相电压", "register": 32070, "data_type": "U16", "byte_order": "ABCD", "factor": "0.1", "dead_zone": "0.1" },
-    { "index": 3, "name": "C相电压", "register": 32071, "data_type": "U16", "byte_order": "ABCD", "factor": "0.1", "dead_zone": "0.1" },
-    { "index": 4, "name": "A相电流", "register": 32072, "data_type": "I32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.1" },
-    { "index": 5, "name": "B相电流", "register": 32074, "data_type": "I32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.1" },
-    { "index": 6, "name": "C相电流", "register": 32076, "data_type": "I32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.1" },
-    { "index": 7, "name": "有功", "register": 32080, "data_type": "I32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.1" },
-    { "index": 8, "name": "无功", "register": 32082, "data_type": "I32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.1" },
-    { "index": 9, "name": "日发电量", "register": 32141, "data_type": "U32", "byte_order": "ABCD", "factor": "0.01", "dead_zone": "0.1" },
-    { "index": 10, "name": "总发电量", "register": 32106, "data_type": "U32", "byte_order": "ABCD", "factor": "0.01", "dead_zone": "0.1" },
-    { "index": 11, "name": "频率", "register": 32085, "data_type": "U16", "byte_order": "ABCD", "factor": "0.01", "dead_zone": "0.01" },
-    { "index": 12, "name": "功率因数", "register": 32084, "data_type": "I16", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.001" },
-    { "index": 14, "name": "额定功率", "register": 30073, "data_type": "U32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "1" }
+    { "index": 1, "name": "Phase A voltage", "register": 32069, "data_type": "U16", "byte_order": "ABCD", "factor": "0.1", "dead_zone": "0.1" },
+    { "index": 2, "name": "Phase B voltage", "register": 32070, "data_type": "U16", "byte_order": "ABCD", "factor": "0.1", "dead_zone": "0.1" },
+    { "index": 3, "name": "Phase C voltage", "register": 32071, "data_type": "U16", "byte_order": "ABCD", "factor": "0.1", "dead_zone": "0.1" },
+    { "index": 4, "name": "Phase A current", "register": 32072, "data_type": "I32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.1" },
+    { "index": 5, "name": "Phase B current", "register": 32074, "data_type": "I32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.1" },
+    { "index": 6, "name": "Phase C current", "register": 32076, "data_type": "I32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.1" },
+    { "index": 7, "name": "Active power", "register": 32080, "data_type": "I32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.1" },
+    { "index": 8, "name": "Reactive power", "register": 32082, "data_type": "I32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.1" },
+    { "index": 9, "name": "Daily energy yield", "register": 32141, "data_type": "U32", "byte_order": "ABCD", "factor": "0.01", "dead_zone": "0.1" },
+    { "index": 10, "name": "Total energy yield", "register": 32106, "data_type": "U32", "byte_order": "ABCD", "factor": "0.01", "dead_zone": "0.1" },
+    { "index": 11, "name": "Frequency", "register": 32085, "data_type": "U16", "byte_order": "ABCD", "factor": "0.01", "dead_zone": "0.01" },
+    { "index": 12, "name": "Power factor", "register": 32084, "data_type": "I16", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "0.001" },
+    { "index": 14, "name": "Rated power", "register": 30073, "data_type": "U32", "byte_order": "ABCD", "factor": "0.001", "dead_zone": "1" }
   ],
   "yx": [
-    { "index": 1, "name": "AGC投入", "register": 32300, "data_type": "U16", "byte_order": "ABCD", "bit_offset": 0, "bit_count": 1, "valid": 1 },
-    { "index": 5, "name": "发电", "register": 32089, "data_type": "U16", "byte_order": "ABCD", "bit_offset": 0, "bit_count": 8, "valid": 2 },
-    { "index": 6, "name": "停机", "register": 32089, "data_type": "U16", "byte_order": "ABCD", "bit_offset": 0, "bit_count": 8, "valid": 3 },
-    { "index": 7, "name": "待机", "register": 32089, "data_type": "U16", "byte_order": "ABCD", "bit_offset": 0, "bit_count": 8, "valid": 10 }
+    { "index": 1, "name": "AGC enabled", "register": 32300, "data_type": "U16", "byte_order": "ABCD", "bit_offset": 0, "bit_count": 1, "valid": 1 },
+    { "index": 5, "name": "Generating", "register": 32089, "data_type": "U16", "byte_order": "ABCD", "bit_offset": 0, "bit_count": 8, "valid": 2 },
+    { "index": 6, "name": "Stopped", "register": 32089, "data_type": "U16", "byte_order": "ABCD", "bit_offset": 0, "bit_count": 8, "valid": 3 },
+    { "index": 7, "name": "Standby", "register": 32089, "data_type": "U16", "byte_order": "ABCD", "bit_offset": 0, "bit_count": 8, "valid": 10 }
   ],
   "yt": [
-    { "index": 1, "name": "有功调节", "register": 40120, "data_type": "U16", "byte_order": "ABCD", "factor": "0.1", "value": 0, "use_defalut": 0, "link_index": 0, "restore_index": 5 },
-    { "index": 2, "name": "无功调节", "register": 40123, "data_type": "U16", "byte_order": "ABCD", "factor": "0.001", "value": 0, "use_defalut": 0, "link_index": 0, "restore_index": 0 },
-    { "index": 5, "name": "有功满发", "register": 40120, "data_type": "U16", "byte_order": "ABCD", "factor": "1", "value": 1000, "use_defalut": 1, "link_index": 0, "restore_index": 0 },
-    { "index": 6, "name": "无功满发", "register": 40123, "data_type": "U16", "byte_order": "ABCD", "factor": "1", "value": 0, "use_defalut": 1, "link_index": 0, "restore_index": 0 }
+    { "index": 1, "name": "Active power adjustment", "register": 40120, "data_type": "U16", "byte_order": "ABCD", "factor": "0.1", "value": 0, "use_defalut": 0, "link_index": 0, "restore_index": 5 },
+    { "index": 2, "name": "Reactive power adjustment", "register": 40123, "data_type": "U16", "byte_order": "ABCD", "factor": "0.001", "value": 0, "use_defalut": 0, "link_index": 0, "restore_index": 0 },
+    { "index": 5, "name": "Active power full output", "register": 40120, "data_type": "U16", "byte_order": "ABCD", "factor": "1", "value": 1000, "use_defalut": 1, "link_index": 0, "restore_index": 0 },
+    { "index": 6, "name": "Reactive power full output", "register": 40123, "data_type": "U16", "byte_order": "ABCD", "factor": "1", "value": 0, "use_defalut": 1, "link_index": 0, "restore_index": 0 }
   ],
   "collect": [
     { "index": 1, "start_addr": 32069, "end_addr": 32077, "funcode": 3 },

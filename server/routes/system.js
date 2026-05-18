@@ -8,7 +8,7 @@ router.post('/getVersion', (req, res) => {
     data: {
       version: `InverterController V1.1. built on ${new Date().toISOString().slice(0, 10)}`,
     },
-    msg: '操作成功',
+    msg: 'Operation successful',
   });
 });
 
@@ -36,15 +36,15 @@ router.post('/getSystemInfo', (req, res) => {
       mem_usage_per: `${usedPer}%`,
       cpu_usage_per: `${cpuUsage}%`,
     },
-    msg: '操作成功',
+    msg: 'Operation successful',
   });
 });
 
 router.post('/restart', (req, res) => {
-  console.log('[System] 收到重启服务请求');
-  res.json({ code: 200, success: true, data: null, msg: '服务即将重启' });
+  console.log('[System] Received service restart request');
+  res.json({ code: 200, success: true, data: null, msg: 'Service will restart shortly' });
   setTimeout(() => {
-    console.log('[System] 执行重启...');
+    console.log('[System] Executing restart...');
     process.exit(0);
   }, 1500);
 });

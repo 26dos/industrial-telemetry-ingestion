@@ -1,8 +1,8 @@
 /**
- * IEC 60870-5-104 连接状态机
+ * IEC 60870-5-104 connection state machine
  *
- * 管理单个 TCP 连接的协议交互：I/S/U 帧处理、序号管理、
- * 滑动窗口、心跳定时器、粘包/拆包。
+ * Manages one TCP connection and its protocol state: I/S/U frame handling, sequence number tracking,
+ * sliding windows, heartbeat timers, and stream framing.
  */
 const EventEmitter = require('events');
 const {
@@ -19,19 +19,19 @@ const STATE_STARTED = 'STARTED';
 const STATE_STOPPED = 'STOPPED';
 
 const DEFAULT_PARAMS = {
-  k: 12,    // 最大未确认 I 帧数
-  w: 8,     // 收到 w 个 I 帧后发 S 确认
-  t0: 30,   // TCP 连接超时（秒）
-  t1: 15,   // 发送/测试超时
-  t2: 10,   // 无数据确认超时
-  t3: 20,   // 空闲测试超时
+  k: 12,    // maximum unacknowledged I-frames
+  w: 8,     // send an S-frame acknowledgement after receiving w I-frames
+  t0: 30,   // TCP connection timeout (seconds)
+  t1: 15,   // send/test timeout
+  t2: 10,   // idle acknowledgement timeout
+  t3: 20,   // idle test timeout
 };
 
 class IEC104Connection extends EventEmitter {
   /**
    * @param {net.Socket} socket
-   * @param {string} id - 连接标识
-   * @param {object} [params] - 协议参数覆盖
+   * @param {string} id - connection identifier
+   * @param {object} [params] - protocol parameter overrides
    */
   constructor(socket, id, params) {
     super();
@@ -61,7 +61,7 @@ class IEC104Connection extends EventEmitter {
     return this.state === STATE_STARTED;
   }
 
-  // ==================== 数据接收 ====================
+  // ==================== data receive path ====================
 
   _onData(data) {
     this._recvBuf = Buffer.concat([this._recvBuf, data]);
@@ -106,7 +106,7 @@ class IEC104Connection extends EventEmitter {
     }
   }
 
-  // ==================== U-frame 处理 ====================
+  // ==================== U-frame handle ====================
 
   _handleUFrame(ctrl) {
     const byte = ctrl.byte;
@@ -119,12 +119,12 @@ class IEC104Connection extends EventEmitter {
       this.unconfirmedCount = 0;
       this._send(buildUFrame(U_STARTDT_CON));
       this.emit('started');
-      console.log(`[IEC104] ${this.id} STARTDT 已激活`);
+      console.log(`[IEC104] ${this.id} STARTDT activated`);
     } else if (byte === U_STOPDT_ACT) {
       this.state = STATE_STOPPED;
       this._send(buildUFrame(U_STOPDT_CON));
       this.emit('stopped');
-      console.log(`[IEC104] ${this.id} STOPDT 已停止`);
+      console.log(`[IEC104] ${this.id} STOPDT stopped`);
     } else if (byte === U_TESTFR_ACT) {
       this._send(buildUFrame(U_TESTFR_CON));
     } else if (byte === U_TESTFR_CON) {
@@ -132,13 +132,13 @@ class IEC104Connection extends EventEmitter {
     }
   }
 
-  // ==================== S-frame 处理 ====================
+  // ==================== S-frame handle ====================
 
   _handleSFrame(ctrl) {
     this._ackSentFrames(ctrl.rxSeq);
   }
 
-  // ==================== I-frame 处理 ====================
+  // ==================== I-frame handle ====================
 
   _handleIFrame(ctrl, asduBuf) {
     if (this.state !== STATE_STARTED) return;
@@ -146,7 +146,7 @@ class IEC104Connection extends EventEmitter {
     this._ackSentFrames(ctrl.rxSeq);
 
     if (ctrl.txSeq !== this.rxSeqNum) {
-      console.warn(`[IEC104] ${this.id} 序号不匹配: 期望 ${this.rxSeqNum}, 收到 ${ctrl.txSeq}`);
+      console.warn(`[IEC104] ${this.id} sequence mismatch: expected ${this.rxSeqNum}, received ${ctrl.txSeq}`);
     }
 
     this.rxSeqNum = (ctrl.txSeq + 1) & 0x7FFF;
@@ -163,7 +163,7 @@ class IEC104Connection extends EventEmitter {
     }
   }
 
-  // ==================== 发送方法 ====================
+  // ==================== send helpers ====================
 
   sendIFrame(asduBuffer) {
     if (this.state !== STATE_STARTED) return false;
@@ -190,24 +190,24 @@ class IEC104Connection extends EventEmitter {
       try {
         this.socket.write(buffer);
       } catch (e) {
-        console.error(`[IEC104] ${this.id} 发送失败:`, e.message);
+        console.error(`[IEC104] ${this.id} send failed:`, e.message);
       }
     }
   }
 
-  // ==================== 确认处理 ====================
+  // ==================== acknowledgement handling ====================
 
   _ackSentFrames(rxSeq) {
     this.ackSeqNum = 0;
     this._clearT1();
   }
 
-  // ==================== 定时器 ====================
+  // ==================== timers ====================
 
   _resetT1() {
     this._clearT1();
     this._t1Timer = setTimeout(() => {
-      console.warn(`[IEC104] ${this.id} T1 超时，关闭连接`);
+      console.warn(`[IEC104] ${this.id} T1 Timeout，closing connection`);
       this.close();
     }, this.params.t1 * 1000);
   }
@@ -250,16 +250,16 @@ class IEC104Connection extends EventEmitter {
     }
   }
 
-  // ==================== 连接管理 ====================
+  // ==================== connection management ====================
 
   _onClose() {
     this._cleanup();
     this.emit('closed');
-    console.log(`[IEC104] ${this.id} 连接关闭`);
+    console.log(`[IEC104] ${this.id} connection closed`);
   }
 
   _onError(err) {
-    console.error(`[IEC104] ${this.id} 错误:`, err.message);
+    console.error(`[IEC104] ${this.id} Error:`, err.message);
     this._cleanup();
     this.emit('error', err);
   }

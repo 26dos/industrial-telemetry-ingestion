@@ -1,14 +1,14 @@
 <template>
   <div class="login-wrapper">
     <div class="login-card">
-      <h2>采集控制单元配置工具</h2>
-      <p class="subtitle">管理员登录</p>
+      <h2>Industrial Telemetry Console</h2>
+      <p class="subtitle">Administrator Login</p>
       <el-form :model="form" @submit.prevent="handleLogin">
         <el-form-item>
           <el-input
             v-model="form.password"
             type="password"
-            placeholder="请输入管理员口令"
+            placeholder="Enter administrator passphrase"
             show-password
             size="large"
             @keyup.enter="handleLogin"
@@ -16,7 +16,7 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" size="large" style="width:100%" @click="handleLogin">
-            登 录
+            Sign In
           </el-button>
         </el-form-item>
       </el-form>
@@ -36,15 +36,15 @@ const form = reactive({ password: '' })
 
 function handleLogin() {
   if (!form.password) {
-    ElMessage.warning('请输入口令')
+    ElMessage.warning('Enter the passphrase')
     return
   }
   if (form.password === FIXED_PASSWORD) {
     sessionStorage.setItem('collector_auth', '1')
-    ElMessage.success('登录成功')
+    ElMessage.success('Signed in')
     router.push('/')
   } else {
-    ElMessage.error('口令错误')
+    ElMessage.error('Invalid passphrase')
   }
 }
 </script>

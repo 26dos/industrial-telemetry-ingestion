@@ -3,54 +3,54 @@
     <el-card shadow="never" style="margin-bottom: 16px;">
       <template #header>
         <div class="card-header">
-          <span>104 转发表管理</span>
+          <span>104 Forwarding Tablemanage</span>
           <el-upload :show-file-list="false" :before-upload="handleUpload" accept=".json">
-            <el-button type="primary">导入转发表</el-button>
+            <el-button type="primary">Import Forwarding Table</el-button>
           </el-upload>
         </div>
       </template>
 
       <el-table :data="tableList" border stripe v-loading="loading">
         <el-table-column type="index" label="#" width="60" align="center" />
-        <el-table-column prop="name" label="转发表名称" min-width="220" />
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column prop="name" label="Forwarding TableName" min-width="220" />
+        <el-table-column label="Status" width="100" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.name === currentUse" type="success" size="small">使用中</el-tag>
+            <el-tag v-if="row.name === currentUse" type="success" size="small">Active</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="260" align="center">
+        <el-table-column label="Actions" width="260" align="center">
           <template #default="{ row }">
-            <el-button type="success" link @click="handleUse(row.name)" :disabled="row.name === currentUse">启用</el-button>
-            <el-button type="primary" link @click="viewDetail(row.name)">查看</el-button>
-            <el-button type="danger" link @click="handleDelete(row.name)">删除</el-button>
+            <el-button type="success" link @click="handleUse(row.name)" :disabled="row.name === currentUse">Enable</el-button>
+            <el-button type="primary" link @click="viewDetail(row.name)">View</el-button>
+            <el-button type="danger" link @click="handleDelete(row.name)">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
-    <el-dialog v-model="detailVisible" :title="`104 转发表: ${detailName}`" width="80%" top="5vh">
+    <el-dialog v-model="detailVisible" :title="`104 Forwarding Table: ${detailName}`" width="80%" top="5vh">
       <el-tabs v-model="detailTab">
-        <el-tab-pane label="遥测 (YC)" name="yc">
+        <el-tab-pane label="Measurements (YC)" name="yc">
           <el-table :data="detailData.yc" border size="small" max-height="400">
-            <el-table-column prop="index" label="点号" width="70" />
-            <el-table-column prop="name" label="名称" min-width="180" />
-            <el-table-column prop="inverter" label="逆变器" width="80" />
-            <el-table-column prop="factor" label="系数" width="120" />
+            <el-table-column prop="index" label="Point ID" width="70" />
+            <el-table-column prop="name" label="Name" min-width="180" />
+            <el-table-column prop="inverter" label="Inverter" width="80" />
+            <el-table-column prop="factor" label="Scale" width="120" />
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="遥信 (YX)" name="yx">
+        <el-tab-pane label="Status Signals (YX)" name="yx">
           <el-table :data="detailData.yx" border size="small" max-height="400">
-            <el-table-column prop="index" label="点号" width="70" />
-            <el-table-column prop="name" label="名称" min-width="200" />
-            <el-table-column prop="inverter" label="逆变器" width="80" />
+            <el-table-column prop="index" label="Point ID" width="70" />
+            <el-table-column prop="name" label="Name" min-width="200" />
+            <el-table-column prop="inverter" label="Inverter" width="80" />
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="遥调 (YT)" name="yt">
+        <el-tab-pane label="Setpoints (YT)" name="yt">
           <el-table :data="detailData.yt" border size="small" max-height="400">
-            <el-table-column prop="index" label="点号" width="70" />
-            <el-table-column prop="name" label="名称" min-width="200" />
-            <el-table-column prop="inverter" label="逆变器" width="80" />
-            <el-table-column prop="factor" label="系数" width="120" />
+            <el-table-column prop="index" label="Point ID" width="70" />
+            <el-table-column prop="name" label="Name" min-width="200" />
+            <el-table-column prop="inverter" label="Inverter" width="80" />
+            <el-table-column prop="factor" label="Scale" width="120" />
           </el-table>
         </el-tab-pane>
       </el-tabs>
@@ -93,20 +93,20 @@ async function viewDetail(name) {
 async function handleUse(name) {
   await set104File(name)
   currentUse.value = name
-  ElMessage.success(`已启用: ${name}`)
+  ElMessage.success(`Enable: ${name}`)
 }
 
 async function handleUpload(file) {
   await upload104File(file)
-  ElMessage.success('转发表上传成功')
+  ElMessage.success('Forwarding TableUploaded successfully')
   loadList()
   return false
 }
 
 async function handleDelete(name) {
-  await ElMessageBox.confirm(`确定删除转发表 "${name}" 吗？`, '确认')
+  await ElMessageBox.confirm(`ConfirmDeleteForwarding Table "${name}" ?`, 'Confirm')
   await delete104File(name)
-  ElMessage.success('已删除')
+  ElMessage.success('Deleted')
   loadList()
 }
 

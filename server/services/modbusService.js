@@ -1,8 +1,8 @@
 /**
- * Modbus RTU 采集服务
+ * Modbus RTU collection service
  *
- * 通过 RS485 串口轮询逆变器 Modbus 寄存器，解析遥测/遥信数据，
- * 经 MQTT 发布变化数据；订阅遥调主题，接收指令后写 Modbus 寄存器。
+ * Polls inverter Modbus registers over RS485 serial ports and parses measurement/status data，
+ * Publishes changes over MQTT and subscribes to setpoint topics before writing Modbus registers.
  */
 const ModbusRTU = require('modbus-serial');
 const mqtt = require('mqtt');
@@ -22,21 +22,21 @@ const lastYxValues = {};
 let pollTimer = null;
 let polling = false;
 
-// --------------- 工具函数 ---------------
+// --------------- utility functions ---------------
 
 function readJSON(filename) {
   return JSON.parse(fs.readFileSync(path.join(DATA_DIR, filename), 'utf-8'));
 }
 
 /**
- * 将逆变器点表索引映射为全局索引（避免多台逆变器冲突）
- * 规则：inverter.index * 100 + point.index
+ * Map inverter point-table indexes to global indexes to avoid collisions across inverters
+ * rule:inverter.index * 100 + point.index
  */
 function globalIndex(inverterIdx, pointIdx) {
   return inverterIdx * 100 + pointIdx;
 }
 
-// --------------- 寄存器值解析 ---------------
+// --------------- register value parsing ---------------
 
 function parseRegValue(regMap, point) {
   const addr = point.register;
@@ -93,7 +93,7 @@ function parseYxStatus(regMap, point) {
   return bitValue === point.valid ? 1 : 0;
 }
 
-// --------------- 串口管理 ---------------
+// --------------- Serial Port Management ---------------
 
 async function openSerial(serialCfg, timeout) {
   const client = new ModbusRTU();
@@ -127,14 +127,14 @@ async function readInverterRegisters(modbusClient, slaveAddr, collectBlocks) {
       }
     } catch (err) {
       console.error(
-        `[Modbus] 读取失败 slave=${slaveAddr} addr=${block.start_addr} count=${count}: ${err.message}`
+        `[Modbus] read failed slave=${slaveAddr} addr=${block.start_addr} count=${count}: ${err.message}`
       );
     }
   }
   return regMap;
 }
 
-// --------------- 轮询逻辑 ---------------
+// --------------- polling loop ---------------
 
 async function pollOneInverter(modbusClient, inv, pointTable) {
   if (!pointTable || !pointTable.collect) return;
@@ -198,12 +198,12 @@ async function pollOneInverter(modbusClient, inv, pointTable) {
       inverters: [{ inverter_id: `inv_${inv.index}`, yc_data: ycChanges }],
     };
     mqttClient.publish(
-      `device/${DEVICE_ID}/ycchange`,
+      `device/${DEVICE_ID}/yc/change`,
       JSON.stringify(msg),
       { qos: 0 }
     );
     console.log(
-      `[Modbus] 遥测变化推送: 逆变器${inv.index}, ${ycChanges.length}个点`
+      `[Modbus] measurement changes published: Inverter${inv.index}, ${ycChanges.length} points`
     );
   }
 
@@ -214,12 +214,12 @@ async function pollOneInverter(modbusClient, inv, pointTable) {
       inverters: [{ inverter_id: `inv_${inv.index}`, yx_data: yxChanges }],
     };
     mqttClient.publish(
-      `device/${DEVICE_ID}/yxchange`,
+      `device/${DEVICE_ID}/yx/change`,
       JSON.stringify(msg),
       { qos: 0 }
     );
     console.log(
-      `[Modbus] 遥信变化推送: 逆变器${inv.index}, ${yxChanges.length}个点`
+      `[Modbus] status changes published: Inverter${inv.index}, ${yxChanges.length} points`
     );
   }
 }
@@ -249,7 +249,7 @@ async function pollAll(serialsData, invertersData, pointTables) {
               await pollOneInverter(client, inv, table);
             } catch (err) {
               console.error(
-                `[Modbus] 轮询逆变器${inv.index}异常: ${err.message}`
+                `[Modbus] polling inverter ${inv.index}error: ${err.message}`
               );
             }
           }
@@ -259,21 +259,21 @@ async function pollAll(serialsData, invertersData, pointTables) {
 
     await Promise.all(promises);
   } catch (err) {
-    console.error(`[Modbus] 轮询异常: ${err.message}`);
+    console.error(`[Modbus] polling error: ${err.message}`);
   } finally {
     polling = false;
   }
 }
 
-// --------------- 遥调指令处理 ---------------
+// --------------- setpoint command handling ---------------
 
 async function handleYtControl(payload, inverters, pointTables) {
   try {
     const { index, value } = JSON.parse(payload.toString());
-    console.log(`[Modbus] 收到遥调指令: index=${index}, value=${value}`);
+    console.log(`[Modbus] received setpoint command: index=${index}, value=${value}`);
 
     if (index < 100) {
-      console.log('[Modbus] 系统级遥调(index<100)，非 Modbus 范围，跳过');
+      console.log('[Modbus] system-level setpoint (index < 100), outside Modbus range, skipped');
       return;
     }
 
@@ -282,7 +282,7 @@ async function handleYtControl(payload, inverters, pointTables) {
 
     const inv = inverters.find((i) => i.index === invIdx);
     if (!inv) {
-      console.error(`[Modbus] 遥调目标逆变器${invIdx}不存在`);
+      console.error(`[Modbus] setpoint target inverter ${invIdx}does not exist`);
       return;
     }
 
@@ -292,14 +292,14 @@ async function handleYtControl(payload, inverters, pointTables) {
     const ytPoint = table.yt.find((p) => p.index === ytIdx);
     if (!ytPoint) {
       console.error(
-        `[Modbus] 遥调点${ytIdx}在逆变器${invIdx}的点表中不存在`
+        `[Modbus] setpoint ${ytIdx} in inverter ${invIdx} is missing from the point table`
       );
       return;
     }
 
     const client = serialClients[inv.serial_ref];
     if (!client) {
-      console.error(`[Modbus] 串口${inv.serial_ref}未打开，无法写入`);
+      console.error(`[Modbus] Serial port${inv.serial_ref} is not open; cannot write`);
       return;
     }
 
@@ -317,23 +317,23 @@ async function handleYtControl(payload, inverters, pointTables) {
     }
 
     console.log(
-      `[Modbus] 遥调写入成功: 逆变器${invIdx}, 寄存器${ytPoint.register}, 值=${rawValue}`
+      `[Modbus] setpoint write succeeded: Inverter${invIdx}, Register${ytPoint.register}, Value=${rawValue}`
     );
   } catch (err) {
-    console.error(`[Modbus] 遥调执行失败: ${err.message}`);
+    console.error(`[Modbus] setpoint execution failed: ${err.message}`);
   }
 }
 
-// --------------- 启动 / 停止 ---------------
+// --------------- start / stop ---------------
 
 function startPolling(cycle, serialsData, invertersData, pointTables) {
   const activeCount = Object.keys(serialClients).length;
   if (activeCount === 0) {
-    console.warn('[Modbus] 没有可用串口，轮询未启动（仅 MQTT 遥调监听生效）');
+    console.warn('[Modbus] no usable serial port; polling did not start (MQTT setpoint listener only)');
     return;
   }
 
-  console.log(`[Modbus] 开始轮询 (${activeCount}个串口活跃)`);
+  console.log(`[Modbus] started polling (${activeCount} active serial ports)`);
 
   pollAll(serialsData, invertersData, pointTables);
 
@@ -350,7 +350,7 @@ function initModbus() {
     serialsData = readJSON('serials.json');
     invertersData = readJSON('inverters.json');
   } catch (err) {
-    console.error(`[Modbus] 配置文件读取失败，采集服务未启动: ${err.message}`);
+    console.error(`[Modbus] config file read failed; collection service did not start: ${err.message}`);
     return;
   }
 
@@ -362,9 +362,9 @@ function initModbus() {
     if (!pointTables[inv.model]) {
       try {
         pointTables[inv.model] = readJSON(`inverter-tables/${inv.model}.json`);
-        console.log(`[Modbus] 点表已加载: ${inv.model}`);
+        console.log(`[Modbus] point table loaded: ${inv.model}`);
       } catch (e) {
-        console.warn(`[Modbus] 点表加载失败: ${inv.model}: ${e.message}`);
+        console.warn(`[Modbus] point table load failed: ${inv.model}: ${e.message}`);
       }
     }
   }
@@ -378,13 +378,13 @@ function initModbus() {
       if (!store.yt.find((item) => item.index === gIdx)) {
         store.yt.push({
           index: gIdx,
-          name: `逆变器${inv.index}-${ytPoint.name}`,
+          name: `Inverter${inv.index}-${ytPoint.name}`,
         });
       }
     }
   }
   store.yt.sort((a, b) => a.index - b.index);
-  console.log(`[Modbus] 遥调点已注入 realtimeStore: ${store.yt.map((t) => t.index).join(', ')}`);
+  console.log(`[Modbus] setpoints injected into realtimeStore: ${store.yt.map((t) => t.index).join(', ')}`);
 
   mqttClient = mqtt.connect(BROKER, {
     clientId: `collector_modbus_${Date.now()}`,
@@ -393,10 +393,10 @@ function initModbus() {
   });
 
   mqttClient.on('connect', () => {
-    console.log(`[Modbus] MQTT 已连接: ${BROKER}`);
+    console.log(`[Modbus] MQTT connected: ${BROKER}`);
     const ytTopic = `device/${DEVICE_ID}/ytcontrol`;
     mqttClient.subscribe(ytTopic, (err) => {
-      if (!err) console.log(`[Modbus] 已订阅遥调主题: ${ytTopic}`);
+      if (!err) console.log(`[Modbus] subscribed to setpoint topic: ${ytTopic}`);
     });
   });
 
@@ -407,7 +407,7 @@ function initModbus() {
   });
 
   mqttClient.on('error', (err) => {
-    console.error(`[Modbus] MQTT 错误: ${err.message}`);
+    console.error(`[Modbus] MQTT Error: ${err.message}`);
   });
 
   const activeSerials = serialsData.serials.filter((s) => s.mode === 1);
@@ -416,9 +416,9 @@ function initModbus() {
   );
 
   if (serialsWithInverters.length === 0) {
-    console.log('[Modbus] 没有需要轮询的串口/逆变器配置');
+    console.log('[Modbus] no serial port/inverter configuration requires polling');
     console.log(
-      `[Modbus] 采集服务已启动（仅 MQTT 监听模式，轮询周期: ${collectCycle / 1000}s）`
+      `[Modbus] collection service started (MQTT listener mode only, polling interval: ${collectCycle / 1000}s)`
     );
     return;
   }
@@ -431,12 +431,12 @@ function initModbus() {
       .then((client) => {
         serialClients[serial.index] = client;
         console.log(
-          `[Modbus] 串口已打开: ${serial.device} (${serial.baud_rate}bps)`
+          `[Modbus] serial port opened: ${serial.device} (${serial.baud_rate}bps)`
         );
       })
       .catch((err) => {
         console.warn(
-          `[Modbus] 串口 ${serial.device} 打开失败: ${err.message}`
+          `[Modbus] Serial port ${serial.device} open failed: ${err.message}`
         );
       })
       .finally(() => {
@@ -448,7 +448,7 @@ function initModbus() {
   }
 
   console.log(
-    `[Modbus] 采集服务初始化中 (轮询周期: ${collectCycle / 1000}s, 超时: ${modbusTimeout / 1000}s)`
+    `[Modbus] collection service initializing (polling interval: ${collectCycle / 1000}s, Timeout: ${modbusTimeout / 1000}s)`
   );
 }
 
@@ -467,7 +467,7 @@ function stopModbus() {
     mqttClient.end();
     mqttClient = null;
   }
-  console.log('[Modbus] 采集服务已停止');
+  console.log('[Modbus] collection service stopped');
 }
 
 module.exports = { initModbus, stopModbus };

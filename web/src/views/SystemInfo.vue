@@ -3,19 +3,19 @@
     <el-card shadow="never" style="margin-bottom: 16px;">
       <template #header>
         <div class="card-header">
-          <span>系统信息</span>
-          <el-button type="danger" @click="handleRestart">重启服务</el-button>
+          <span>System Information</span>
+          <el-button type="danger" @click="handleRestart">Restart Service</el-button>
         </div>
       </template>
 
       <el-descriptions :column="2" border v-loading="loading">
-        <el-descriptions-item label="程序版本">{{ version }}</el-descriptions-item>
-        <el-descriptions-item label="CPU 使用率">
+        <el-descriptions-item label="Program Version">{{ version }}</el-descriptions-item>
+        <el-descriptions-item label="CPU Usage">
           <el-progress :percentage="cpuPercent" :color="progressColor(cpuPercent)" />
         </el-descriptions-item>
-        <el-descriptions-item label="总内存">{{ sysInfo.mem_total }}</el-descriptions-item>
-        <el-descriptions-item label="可用内存">{{ sysInfo.mem_available }}</el-descriptions-item>
-        <el-descriptions-item label="内存使用率">
+        <el-descriptions-item label="Total Memory">{{ sysInfo.mem_total }}</el-descriptions-item>
+        <el-descriptions-item label="Available Memory">{{ sysInfo.mem_available }}</el-descriptions-item>
+        <el-descriptions-item label="Memory Usage">
           <el-progress :percentage="memPercent" :color="progressColor(memPercent)" />
         </el-descriptions-item>
       </el-descriptions>
@@ -56,9 +56,9 @@ async function loadData() {
 }
 
 async function handleRestart() {
-  await ElMessageBox.confirm('确定要重启采集控制服务吗？', '确认')
+  await ElMessageBox.confirm('Restart the telemetry collection service?', 'Confirm')
   await restartService()
-  ElMessage.success('服务正在重启')
+  ElMessage.success('Service is restarting')
 }
 
 onMounted(() => {

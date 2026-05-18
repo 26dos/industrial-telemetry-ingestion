@@ -1,7 +1,7 @@
 {
   "name": "collector-server",
   "version": "1.0.0",
-  "description": "采集控制单元配置工具 - 后端服务",
+  "description": "Industrial Telemetry Console - backend service",
   "main": "app.js",
   "scripts": {
     "dev": "node app.js",

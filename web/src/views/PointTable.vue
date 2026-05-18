@@ -3,70 +3,70 @@
     <el-card shadow="never" style="margin-bottom: 16px;">
       <template #header>
         <div class="card-header">
-          <span>逆变器点表管理</span>
+          <span>InverterPoint Tables</span>
           <el-upload
             :show-file-list="false"
             :before-upload="handleUpload"
             accept=".json"
           >
-            <el-button type="primary">导入点表</el-button>
+            <el-button type="primary">Import Point Table</el-button>
           </el-upload>
         </div>
       </template>
 
       <el-table :data="tableList" border stripe v-loading="loading">
         <el-table-column type="index" label="#" width="60" align="center" />
-        <el-table-column prop="name" label="点表名称" min-width="260" />
-        <el-table-column label="操作" width="200" align="center">
+        <el-table-column prop="name" label="Point Table Name" min-width="260" />
+        <el-table-column label="Actions" width="200" align="center">
           <template #default="{ row }">
-            <el-button type="primary" link @click="viewDetail(row.name)">查看</el-button>
-            <el-button type="danger" link @click="handleDelete(row.name)">删除</el-button>
+            <el-button type="primary" link @click="viewDetail(row.name)">View</el-button>
+            <el-button type="danger" link @click="handleDelete(row.name)">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
-    <el-dialog v-model="detailVisible" :title="`点表详情: ${detailName}`" width="90%" top="5vh">
+    <el-dialog v-model="detailVisible" :title="`Point Table Details: ${detailName}`" width="90%" top="5vh">
       <el-tabs v-model="detailTab">
-        <el-tab-pane label="遥测 (YC)" name="yc">
+        <el-tab-pane label="Measurements (YC)" name="yc">
           <el-table :data="detailData.yc" border size="small" max-height="400">
-            <el-table-column prop="index" label="序号" width="60" />
-            <el-table-column prop="name" label="名称" width="120" />
-            <el-table-column prop="register" label="寄存器" width="80" />
-            <el-table-column prop="data_type" label="数据类型" width="90" />
-            <el-table-column prop="byte_order" label="字节序" width="80" />
-            <el-table-column prop="factor" label="系数" width="80" />
-            <el-table-column prop="dead_zone" label="死区" width="80" />
+            <el-table-column prop="index" label="Index" width="60" />
+            <el-table-column prop="name" label="Name" width="120" />
+            <el-table-column prop="register" label="Register" width="80" />
+            <el-table-column prop="data_type" label="Data Type" width="90" />
+            <el-table-column prop="byte_order" label="Byte Order" width="80" />
+            <el-table-column prop="factor" label="Scale" width="80" />
+            <el-table-column prop="dead_zone" label="Deadband" width="80" />
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="遥信 (YX)" name="yx">
+        <el-tab-pane label="Status Signals (YX)" name="yx">
           <el-table :data="detailData.yx" border size="small" max-height="400">
-            <el-table-column prop="index" label="序号" width="60" />
-            <el-table-column prop="name" label="名称" width="120" />
-            <el-table-column prop="register" label="寄存器" width="80" />
-            <el-table-column prop="data_type" label="数据类型" width="90" />
-            <el-table-column prop="bit_offset" label="位偏移" width="80" />
-            <el-table-column prop="bit_count" label="位长度" width="80" />
-            <el-table-column prop="valid" label="有效值" width="80" />
+            <el-table-column prop="index" label="Index" width="60" />
+            <el-table-column prop="name" label="Name" width="120" />
+            <el-table-column prop="register" label="Register" width="80" />
+            <el-table-column prop="data_type" label="Data Type" width="90" />
+            <el-table-column prop="bit_offset" label="Bit Offset" width="80" />
+            <el-table-column prop="bit_count" label="Bit Length" width="80" />
+            <el-table-column prop="valid" label="Valid Value" width="80" />
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="遥调 (YT)" name="yt">
+        <el-tab-pane label="Setpoints (YT)" name="yt">
           <el-table :data="detailData.yt" border size="small" max-height="400">
-            <el-table-column prop="index" label="序号" width="60" />
-            <el-table-column prop="name" label="名称" width="120" />
-            <el-table-column prop="register" label="寄存器" width="80" />
-            <el-table-column prop="data_type" label="数据类型" width="90" />
-            <el-table-column prop="factor" label="系数" width="80" />
-            <el-table-column prop="value" label="默认值" width="80" />
-            <el-table-column prop="use_defalut" label="使用默认" width="80" />
+            <el-table-column prop="index" label="Index" width="60" />
+            <el-table-column prop="name" label="Name" width="120" />
+            <el-table-column prop="register" label="Register" width="80" />
+            <el-table-column prop="data_type" label="Data Type" width="90" />
+            <el-table-column prop="factor" label="Scale" width="80" />
+            <el-table-column prop="value" label="Default Value" width="80" />
+            <el-table-column prop="use_defalut" label="Use Default" width="80" />
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="采集段 (Collect)" name="collect">
+        <el-tab-pane label="Collection Ranges (Collect)" name="collect">
           <el-table :data="detailData.collect" border size="small" max-height="400">
-            <el-table-column prop="index" label="序号" width="80" />
-            <el-table-column prop="start_addr" label="起始地址" width="120" />
-            <el-table-column prop="end_addr" label="结束地址" width="120" />
-            <el-table-column prop="funcode" label="功能码" width="100" />
+            <el-table-column prop="index" label="Index" width="80" />
+            <el-table-column prop="start_addr" label="Start Address" width="120" />
+            <el-table-column prop="end_addr" label="End Address" width="120" />
+            <el-table-column prop="funcode" label="Function Code" width="100" />
           </el-table>
         </el-tab-pane>
       </el-tabs>
@@ -109,15 +109,15 @@ async function viewDetail(name) {
 
 async function handleUpload(file) {
   await uploadInverterTableFile(file)
-  ElMessage.success('点表上传成功')
+  ElMessage.success('Point table uploaded successfully')
   loadList()
   return false
 }
 
 async function handleDelete(name) {
-  await ElMessageBox.confirm(`确定删除点表 "${name}" 吗？`, '确认')
+  await ElMessageBox.confirm(`Delete point table "${name}" ?`, 'Confirm')
   await deleteInverterTableFile(name)
-  ElMessage.success('已删除')
+  ElMessage.success('Deleted')
   loadList()
 }
 

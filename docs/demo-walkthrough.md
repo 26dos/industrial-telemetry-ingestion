@@ -15,7 +15,7 @@ sequenceDiagram
     participant Store as Local Config Store
     participant UI as Vue Console
 
-    Device->>Broker: publish device/{id}/ycchange
+    Device->>Broker: publish device/{id}/yc/change
     UI->>Server: POST /api/getAllData/YC
     Server->>Store: load point table mapping
     Server->>Broker: subscribe to telemetry topic
@@ -70,7 +70,7 @@ flowchart LR
 ```json
 {
   "device_id": "data_collector_001",
-  "topic": "device/001/ycchange",
+  "topic": "device/001/yc/change",
   "timestamp": "2026-01-15T14:30:25.123Z",
   "inverters": [
     {

@@ -11,7 +11,7 @@ function readConfig() {
 router.post('/getConfigInfo', (req, res) => {
   try {
     const data = readConfig();
-    res.json({ code: 200, success: true, data, msg: '操作成功' });
+    res.json({ code: 200, success: true, data, msg: 'Operation successful' });
   } catch (e) {
     res.json({ code: 500, success: false, data: null, msg: e.message });
   }
@@ -21,7 +21,7 @@ router.post('/setConfigInfo', (req, res) => {
   try {
     const config = req.body;
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');
-    res.json({ code: 200, success: true, data: null, msg: '操作成功' });
+    res.json({ code: 200, success: true, data: null, msg: 'Operation successful' });
   } catch (e) {
     res.json({ code: 500, success: false, data: null, msg: e.message });
   }

@@ -21,7 +21,7 @@ function getNetworkInterface() {
 router.post('/getNetwork', (req, res) => {
   try {
     const data = readNetwork();
-    res.json({ code: 200, success: true, data, msg: '操作成功' });
+    res.json({ code: 200, success: true, data, msg: 'Operation successful' });
   } catch (e) {
     res.json({ code: 500, success: false, data: null, msg: e.message });
   }
@@ -31,11 +31,11 @@ router.post('/setNetwork', (req, res) => {
   try {
     const { ip, netmask, gateway } = req.body;
     if (!ip || !netmask) {
-      return res.json({ code: 400, success: false, data: null, msg: 'IP和子网掩码不能为空' });
+      return res.json({ code: 400, success: false, data: null, msg: 'IP address and subnet mask are required' });
     }
     const data = { ip, netmask, gateway: gateway || '' };
     fs.writeFileSync(NET_PATH, JSON.stringify(data, null, 2), 'utf-8');
-    res.json({ code: 200, success: true, data: null, msg: '操作成功' });
+    res.json({ code: 200, success: true, data: null, msg: 'Operation successful' });
   } catch (e) {
     res.json({ code: 500, success: false, error: e.message });
   }
@@ -44,7 +44,7 @@ router.post('/setNetwork', (req, res) => {
 router.post('/restartNetwork', (req, res) => {
   const iface = getNetworkInterface();
   const config = readNetwork();
-  console.log(`[Network] 重启网络 iface=${iface} ip=${config.ip}`);
+  console.log(`[Network] Restart Network iface=${iface} ip=${config.ip}`);
 
   try {
     execSync(`ip addr flush dev ${iface}`, { timeout: 5000 });
@@ -53,14 +53,14 @@ router.post('/restartNetwork', (req, res) => {
     if (config.gateway) {
       execSync(`ip route add default via ${config.gateway} dev ${iface}`, { timeout: 5000 });
     }
-    res.json({ code: 200, success: true, data: null, msg: '网络已重启' });
+    res.json({ code: 200, success: true, data: null, msg: 'Network restarted' });
   } catch (e) {
-    console.error('[Network] 重启失败，尝试 systemctl 方式:', e.message);
+    console.error('[Network] Restart failed; trying systemctl fallback:', e.message);
     exec('systemctl restart networking 2>/dev/null || systemctl restart NetworkManager 2>/dev/null', { timeout: 15000 }, (err) => {
       if (err) {
-        return res.json({ code: 500, success: false, data: null, msg: `网络重启失败: ${err.message}` });
+        return res.json({ code: 500, success: false, data: null, msg: `Network restart failed: ${err.message}` });
       }
-      res.json({ code: 200, success: true, data: null, msg: '网络已重启' });
+      res.json({ code: 200, success: true, data: null, msg: 'Network restarted' });
     });
   }
 });

@@ -2,8 +2,8 @@
   <el-container class="layout-container">
     <el-aside width="220px" class="layout-aside">
       <div class="logo">
-        <h3>采集控制单元</h3>
-        <span class="sub">配置工具</span>
+        <h3>Telemetry Collector</h3>
+        <span class="sub">Configuration Console</span>
       </div>
       <el-menu
         :default-active="currentRoute"
@@ -14,49 +14,49 @@
       >
         <el-menu-item index="/system-config">
           <el-icon><Setting /></el-icon>
-          <span>系统配置</span>
+          <span>System Configuration</span>
         </el-menu-item>
         <el-menu-item index="/network">
           <el-icon><Connection /></el-icon>
-          <span>网络配置</span>
+          <span>Network Configuration</span>
         </el-menu-item>
         <el-menu-item index="/lora">
           <el-icon><Promotion /></el-icon>
-          <span>无线配置</span>
+          <span>Wireless Configuration</span>
         </el-menu-item>
         <el-menu-item index="/serial">
           <el-icon><SetUp /></el-icon>
-          <span>串口管理</span>
+          <span>Serial Port Management</span>
         </el-menu-item>
         <el-menu-item index="/inverter">
           <el-icon><Monitor /></el-icon>
-          <span>逆变器管理</span>
+          <span>Inverter Management</span>
         </el-menu-item>
         <el-sub-menu index="realtime-group">
           <template #title>
             <el-icon><DataLine /></el-icon>
-            <span>实时数据</span>
+            <span>Realtime Data</span>
           </template>
-          <el-menu-item index="/realtime">104 数据</el-menu-item>
+          <el-menu-item index="/realtime">IEC 104 Data</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="table-group">
           <template #title>
             <el-icon><Document /></el-icon>
-            <span>点表管理</span>
+            <span>Point Tables</span>
           </template>
-          <el-menu-item index="/point-table">设备点表</el-menu-item>
-          <el-menu-item index="/table-104">104 点表</el-menu-item>
+          <el-menu-item index="/point-table">Device Point Table</el-menu-item>
+          <el-menu-item index="/table-104">IEC 104 Tables</el-menu-item>
         </el-sub-menu>
         <el-menu-item index="/system-info">
           <el-icon><InfoFilled /></el-icon>
-          <span>系统信息</span>
+          <span>System Information</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
       <el-header class="layout-header">
         <span class="page-title">{{ currentTitle }}</span>
-        <el-button text @click="handleLogout">退出登录</el-button>
+        <el-button text @click="handleLogout">Sign Out</el-button>
       </el-header>
       <el-main class="layout-main">
         <router-view />

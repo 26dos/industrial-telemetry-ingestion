@@ -112,8 +112,8 @@ POST /api/getSystemInfo
 MQTT topics carry real-time device updates:
 
 ```text
-device/{id}/ycchange
-device/{id}/yxchange
+device/{id}/yc/change
+device/{id}/yx/change
 ```
 
 Example payload:

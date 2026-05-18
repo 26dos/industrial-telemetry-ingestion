@@ -1,8 +1,8 @@
 /**
- * IEC 60870-5-104 TCP 服务器
+ * IEC 60870-5-104 TCP server
  *
- * 管理 TCP 监听、连接生命周期，提供向上层的事件回调
- * 和向连接发送/广播 I 帧的接口。
+ * Manages TCP listening, connection lifecycle, and callbacks to upper layers
+ * and exposes APIs for sending/broadcasting I-frames.
  */
 const net = require('net');
 const EventEmitter = require('events');
@@ -12,9 +12,9 @@ const { parseASDU } = require('./protocol');
 class IEC104Server extends EventEmitter {
   /**
    * @param {object} options
-   * @param {number} options.port - 监听端口（默认 2404）
-   * @param {number} [options.casdu=1] - 公共地址
-   * @param {object} [options.params] - 协议参数覆盖（k/w/t0-t3）
+   * @param {number} options.port - listening port (default 2404)
+   * @param {number} [options.casdu=1] - common address
+   * @param {object} [options.params] - protocol parameter overrides (k/w/t0-t3)
    */
   constructor(options = {}) {
     super();
@@ -32,12 +32,12 @@ class IEC104Server extends EventEmitter {
     });
 
     this._server.on('error', (err) => {
-      console.error(`[IEC104 Server] 错误: ${err.message}`);
+      console.error(`[IEC104 Server] Error: ${err.message}`);
       this.emit('error', err);
     });
 
     this._server.listen(this.port, () => {
-      console.log(`[IEC104 Server] 已启动，监听端口 ${this.port}`);
+      console.log(`[IEC104 Server] started on port ${this.port}`);
       this.emit('listening');
     });
   }
@@ -52,13 +52,13 @@ class IEC104Server extends EventEmitter {
       this._server.close();
       this._server = null;
     }
-    console.log('[IEC104 Server] 已停止');
+    console.log('[IEC104 Server] stopped');
   }
 
   _onConnection(socket) {
     const id = `conn_${++this._connIdCounter}`;
     const addr = `${socket.remoteAddress}:${socket.remotePort}`;
-    console.log(`[IEC104 Server] 新连接: ${id} (${addr})`);
+    console.log(`[IEC104 Server] new connection: ${id} (${addr})`);
 
     const conn = new IEC104Connection(socket, id, this.params);
     this.connections.set(id, conn);
@@ -81,7 +81,7 @@ class IEC104Server extends EventEmitter {
     conn.on('closed', () => {
       this.connections.delete(id);
       this.emit('connectionClosed', id);
-      console.log(`[IEC104 Server] 连接断开: ${id} (${addr}), 当前 ${this.connections.size} 个活跃连接`);
+      console.log(`[IEC104 Server] connection disconnected: ${id} (${addr}), current ${this.connections.size} active connections`);
     });
 
     conn.on('error', () => {
@@ -90,7 +90,7 @@ class IEC104Server extends EventEmitter {
   }
 
   /**
-   * 向指定连接发送 I 帧
+   * Send an I-frame to a specific connection
    * @param {string} connId
    * @param {Buffer} asduBuffer
    * @returns {boolean}
@@ -102,7 +102,7 @@ class IEC104Server extends EventEmitter {
   }
 
   /**
-   * 向所有已激活的连接广播 I 帧
+   * Broadcast an I-frame to all active connections
    * @param {Buffer} asduBuffer
    */
   broadcast(asduBuffer) {
@@ -114,7 +114,7 @@ class IEC104Server extends EventEmitter {
   }
 
   /**
-   * 获取活跃连接数
+   * Get active connection count
    */
   get activeCount() {
     let count = 0;
