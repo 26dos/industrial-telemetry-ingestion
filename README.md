@@ -1,4 +1,4 @@
-# collector
+# industrial-telemetry-ingestion
 
 Industrial telemetry ingestion and monitoring console for edge data collectors.
 
@@ -39,7 +39,7 @@ local config + point tables  edge collector / devices
 ## Repository Layout
 
 ```
-collector/
+industrial-telemetry-ingestion/
   server/
     app.js                   Express service entrypoint
     routes/                  configuration and monitoring APIs
